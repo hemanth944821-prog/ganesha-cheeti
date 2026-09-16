@@ -38,6 +38,105 @@ let mockPayouts = [
   { PayoutID: 4, MemberID: 7, MemberCode: 'M#07', Name_EN: 'Ramesh Kumar', Name_KN: 'ರಮೇಶ್ ಕುಮಾರ್', MonthYear: 'Sep 2026', AmountWon: 2400 },
 ];
 
+let mockNotifications = [
+  {
+    NotificationID: 1,
+    Title: '⏱️ Monthly Payment Due Reminder / ಕೊಡುಗೆ ಜ್ಞಾಪನೆ',
+    Body: 'Monthly Cheeti ₹200 contribution is due by 10th of every month. Please pay via UPI or Cash to stay active!',
+    Type: 'Reminder',
+    CreatedAt: '2026-09-10 09:00:00',
+    IsRead: false
+  },
+  {
+    NotificationID: 2,
+    Title: '🎲 12th Cheeti Lucky Draw Alert / 12ನೇ ತಾರೀಖಿನ ಚೀಟಿ ಡ್ರಾ',
+    Body: 'Monthly Cheeti Lucky Draw will take place on 12th at 6:00 PM! Good luck to all active group members!',
+    Type: 'Event',
+    CreatedAt: '2026-09-12 10:30:00',
+    IsRead: false
+  },
+  {
+    NotificationID: 3,
+    Title: '🎉 September Winner Announced / ಸೆಪ್ಟೆಂಬರ್ ವಿಜೇತರು',
+    Body: 'Congratulations to Ramesh Kumar for winning September 2026 Cheeti Payout of ₹2,400!',
+    Type: 'Winner',
+    CreatedAt: '2026-09-12 18:30:00',
+    IsRead: true
+  }
+];
+
+// --- NOTIFICATIONS ENDPOINTS ---
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const pool = await getPool();
+    if (pool) {
+      await pool.request().query(`
+        IF OBJECT_ID('dbo.Notifications', 'U') IS NULL
+        BEGIN
+            CREATE TABLE dbo.Notifications (
+                NotificationID INT IDENTITY(1,1) PRIMARY KEY,
+                Title NVARCHAR(250) NOT NULL,
+                Body NVARCHAR(500) NOT NULL,
+                Type NVARCHAR(50) NOT NULL DEFAULT 'Broadcast',
+                CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
+                IsRead BIT NOT NULL DEFAULT 0
+            );
+        END
+      `);
+
+      const result = await pool.request().query('SELECT * FROM dbo.Notifications ORDER BY NotificationID DESC');
+      if (result.recordset && result.recordset.length > 0) {
+        return res.json(result.recordset);
+      }
+    }
+  } catch (err) {
+    console.error('Notifications SQL error:', err.message);
+  }
+  res.json(mockNotifications);
+});
+
+app.post('/api/notifications', async (req, res) => {
+  const { title, body, type } = req.body;
+  const newNotif = {
+    NotificationID: mockNotifications.length + 1,
+    Title: title || 'Group Alert / ಸೂಚನೆ',
+    Body: body || 'Important update from Ganesha Cheeti Admin.',
+    Type: type || 'Broadcast',
+    CreatedAt: new Date().toISOString().replace('T', ' ').substring(0, 19),
+    IsRead: false
+  };
+
+  try {
+    const pool = await getPool();
+    if (pool) {
+      await pool.request().query(`
+        IF OBJECT_ID('dbo.Notifications', 'U') IS NULL
+        BEGIN
+            CREATE TABLE dbo.Notifications (
+                NotificationID INT IDENTITY(1,1) PRIMARY KEY,
+                Title NVARCHAR(250) NOT NULL,
+                Body NVARCHAR(500) NOT NULL,
+                Type NVARCHAR(50) NOT NULL DEFAULT 'Broadcast',
+                CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
+                IsRead BIT NOT NULL DEFAULT 0
+            );
+        END
+      `);
+
+      await pool.request()
+        .input('title', sql.NVarChar, newNotif.Title)
+        .input('body', sql.NVarChar, newNotif.Body)
+        .input('type', sql.NVarChar, newNotif.Type)
+        .query('INSERT INTO dbo.Notifications (Title, Body, Type, CreatedAt) VALUES (@title, @body, @type, GETDATE())');
+    }
+  } catch (err) {
+    console.error('Save notification SQL error:', err.message);
+  }
+
+  mockNotifications.unshift(newNotif);
+  res.status(201).json({ success: true, notification: newNotif });
+});
+
 // --- AUTH / LOGIN ENDPOINT ---
 app.post('/api/login', async (req, res) => {
   const { phone, password } = req.body;

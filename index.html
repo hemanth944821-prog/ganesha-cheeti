@@ -154,6 +154,9 @@
             </div>
             <div class="header-right">
               <button class="lang-toggle-btn" onclick="toggleLanguage()" style="padding: 4px 10px; font-size: 11px;">🌐 <span class="lang-btn-text">English</span></button>
+              <button class="icon-btn" onclick="openModal('modalNotificationInbox')">
+                🔔<span class="notification-dot" id="unreadBadgeDot"></span>
+              </button>
               <button class="icon-btn" onclick="openModal('modalProfile')">
                 <span id="userAvatarHeader" style="font-size: 16px;">👤</span>
               </button>
@@ -163,7 +166,10 @@
           <!-- Admin Mode Indicator Banner -->
           <div id="adminModeBanner" style="display:none; background: #991B1B; color: white; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; align-items: center; justify-content: space-between;">
             <span>👑 Admin Control Active (ಗಣೇಶ್ - ಅಡ್ಮಿನ್)</span>
-            <button class="chip-tab" style="background: white; color: #991B1B; padding: 3px 10px; font-size: 10px;" onclick="openModal('modalChangePassword')">Change Password</button>
+            <div style="display:flex; gap:6px;">
+              <button class="chip-tab" style="background: #F59E0B; color: white; padding: 3px 8px; font-size: 10px;" onclick="openModal('modalSendNotification')">📢 Alert Members</button>
+              <button class="chip-tab" style="background: white; color: #991B1B; padding: 3px 8px; font-size: 10px;" onclick="openModal('modalChangePassword')">Password</button>
+            </div>
           </div>
 
           <!-- Total Savings Hero Card -->
@@ -581,6 +587,20 @@
           </div>
 
           <div class="info-list-card">
+            <label style="font-weight: 700; font-size: 13px; color: var(--text-main);">Push Notifications / ಸೂಚನೆಗಳು</label>
+            <div class="payment-option-card selected" onclick="requestNotificationPermission()">
+              <div class="payment-option-left">
+                <span>🔔</span>
+                <div>
+                  <div class="option-title">Enable Reminders</div>
+                  <div class="option-sub">10th Due & 12th Draw Alerts</div>
+                </div>
+              </div>
+              <span>✅</span>
+            </div>
+          </div>
+
+          <div class="info-list-card">
             <label style="font-weight: 700; font-size: 13px; color: var(--text-main);">Language / ಭಾಷೆ</label>
 
             <div class="payment-options-group">
@@ -834,7 +854,6 @@
     </div>
   </div>
 
-  <!-- MONTH & YEAR SELECTOR DROPDOWN ON PAYOUT DRAW MODAL -->
   <div class="modal-overlay" id="modalConductDraw">
     <div class="modal-box">
       <div class="modal-header">
@@ -875,7 +894,54 @@
     </div>
   </div>
 
-  <!-- USER PROFILE MODAL -->
+  <!-- NOTIFICATION INBOX DRAWER MODAL -->
+  <div class="modal-overlay" id="modalNotificationInbox">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>🔔 Notification Inbox / ಸೂಚನೆಗಳು</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalNotificationInbox')">✕</button>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Reminders & Alerts</span>
+        <button class="chip-tab" style="padding: 2px 8px; font-size: 10px;" onclick="markAllNotificationsRead()">Mark all as read</button>
+      </div>
+
+      <div class="history-list" id="notificationsContainer">
+        <!-- Dynamic Notifications List -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN BROADCAST NOTIFICATION MODAL -->
+  <div class="modal-overlay" id="modalSendNotification">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>📢 Send Alert / ಸದಸ್ಯರಿಗೆ ಸೂಚನೆ ಕಳುಹಿಸಿ</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalSendNotification')">✕</button>
+      </div>
+
+      <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+        <button type="button" class="demo-chip chip-admin" onclick="fillQuickNotificationPreset('due')">⏱️ 10th Due Reminder</button>
+        <button type="button" class="demo-chip chip-member" onclick="fillQuickNotificationPreset('draw')">🎲 12th Draw Day Alert</button>
+      </div>
+
+      <form onsubmit="handleAdminSendNotificationSubmit(event)">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Notification Title / ಶೀರ್ಷಿಕೆ</label>
+          <input type="text" id="notifTitle" class="form-input" placeholder="e.g. Monthly Contribution Reminder" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label>Message / ಸಂದೇಶ (English / ಕನ್ನಡ)</label>
+          <input type="text" id="notifBody" class="form-input" placeholder="e.g. Monthly Cheeti ₹200 is due tomorrow!" required>
+        </div>
+
+        <button type="submit" class="btn-primary-wide">Broadcast Push Alert / ಕಳುಹಿಸಿ</button>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="modalProfile">
     <div class="modal-box" style="text-align: center;">
       <div class="modal-header">

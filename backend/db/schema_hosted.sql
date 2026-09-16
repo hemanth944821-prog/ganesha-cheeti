@@ -81,6 +81,15 @@ CREATE TABLE dbo.Loans (
     Status NVARCHAR(20) NOT NULL DEFAULT 'Active'
 );
 
+CREATE TABLE dbo.Notifications (
+    NotificationID INT IDENTITY(1,1) PRIMARY KEY,
+    Title NVARCHAR(250) NOT NULL,
+    Body NVARCHAR(500) NOT NULL,
+    Type NVARCHAR(50) NOT NULL DEFAULT 'Broadcast',
+    CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
+    IsRead BIT NOT NULL DEFAULT 0
+);
+
 -- SEED DATA WITH ADMIN AS MEMBER #01 & PASSWORDS
 INSERT INTO dbo.Members (MemberCode, Name_EN, Name_KN, Phone, Password, Role, Status) VALUES
 ('M#01', 'Ganesh (Admin)', N'ಗಣೇಶ್ (ಅಡ್ಮಿನ್)', '9876543210', 'admin123', 'Admin', 'Active'),

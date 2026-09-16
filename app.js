@@ -167,6 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchLiveDataFromBackend();
   renderMembersList();
   renderExpensesList('all');
+  loadNotificationsData();
+  checkAutomatedReminders();
   updateI18nText();
 });
 
@@ -699,3 +701,294 @@ function toggleDeviceView() {
     }
   }
 }
+
+// ============================================================
+// PUSH NOTIFICATIONS & REMINDER ENGINE
+// ============================================================
+
+let notificationsData = [
+  {
+    id: 1,
+    title: "⏱️ Monthly Payment Due Reminder / ಕೊಡುಗೆ ಜ್ಞಾಪನೆ",
+    body: "Monthly Cheeti ₹200 contribution is due by 10th of every month. Please pay via UPI or Cash to stay active!",
+    type: "reminder",
+    time: "10 Sep 2026, 09:00 AM",
+    isRead: false
+  },
+  {
+    id: 2,
+    title: "🎲 12th Cheeti Lucky Draw Alert / 12ನೇ ತಾರೀಖಿನ ಚೀಟಿ ಡ್ರಾ",
+    body: "Monthly Cheeti Lucky Draw will take place on 12th at 6:00 PM! Good luck to all active group members!",
+    type: "event",
+    time: "12 Sep 2026, 10:30 AM",
+    isRead: false
+  },
+  {
+    id: 3,
+    title: "🎉 September Winner Announced / ಸೆಪ್ಟೆಂಬರ್ ವಿಜೇತರು",
+    body: "Congratulations to Ramesh Kumar for winning September 2026 Cheeti Payout of ₹2,400!",
+    type: "winner",
+    time: "12 Sep 2026, 06:30 PM",
+    isRead: true
+  }
+];
+
+// Play standard native app sound tone via Web Audio API
+function playNotificationSound() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.25);
+  } catch (err) {
+    console.warn('Audio tone play error:', err.message);
+  }
+}
+
+// Request Browser Web Push Notification Permission
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) {
+    showToast(currentLang === 'kn' ? 'ನಿಮ್ಮ ಬ್ರೌಸರ್ ಪುಶ್ ಅಧಿಸೂಚನೆಗಳನ್ನು ಬೆಂಬಲಿಸುವುದಿಲ್ಲ' : 'Web Push notifications are not supported by this browser.', 'warning');
+    return;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      playNotificationSound();
+      showToast(currentLang === 'kn' ? '🔔 ಪುಶ್ ಅಧಿಸೂಚನೆಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ!' : '🔔 Push notifications enabled successfully!', 'success');
+      
+      // Trigger instant welcome test notification
+      sendWebPushNotification(
+        "Ganesha Cheeti (ಗಣೇಶ ಚೀಟಿ)",
+        currentLang === 'kn' ? "ಅಧಿಸೂಚನೆಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ. 10 ಮತ್ತು 12ನೇ ತಾರೀಖಿನ ಜ್ಞಾಪನೆಗಳು ಇಲ್ಲಿ ಬರುತ್ತವೆ!" : "Push notifications active! You will receive 10th due date and 12th draw day alerts."
+      );
+    } else if (permission === 'denied') {
+      showToast(currentLang === 'kn' ? 'ಅಧಿಸೂಚನೆಗಳ ಅನುಮತಿಯನ್ನು ನಿರಾಕರಿಸಲಾಗಿದೆ.' : 'Notification permission denied in browser settings.', 'error');
+    }
+  } catch (err) {
+    console.error('Permission request error:', err);
+    showToast('Could not request notification permission.', 'error');
+  }
+}
+
+// Send Web Push Notification to Device / Browser
+function sendWebPushNotification(title, body) {
+  playNotificationSound();
+
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      new Notification(title, {
+        body: body,
+        icon: 'ganesha_avatar.png',
+        badge: 'ganesha_avatar.png',
+        tag: 'ganesha-cheeti-notif',
+        renotify: true
+      });
+    } catch (err) {
+      console.warn('Browser Notification error:', err.message);
+    }
+  } else {
+    showToast(`🔔 ${title}: ${body}`, 'info', 4500);
+  }
+}
+
+// Load notifications from Backend API
+async function loadNotificationsData() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/notifications`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        notificationsData = data.map(item => ({
+          id: item.NotificationID || item.id,
+          title: item.Title || item.title,
+          body: item.Body || item.body,
+          type: (item.Type || item.type || 'broadcast').toLowerCase(),
+          time: item.CreatedAt ? new Date(item.CreatedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Recently',
+          isRead: item.IsRead || false
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn('Load notifications backend warning:', err.message);
+  }
+  renderNotificationsInbox();
+}
+
+// Render Notification Items inside Modal Inbox
+function renderNotificationsInbox() {
+  const container = document.getElementById('notificationsContainer');
+  const badgeDot = document.getElementById('unreadBadgeDot');
+
+  const unreadCount = notificationsData.filter(n => !n.isRead).length;
+
+  if (badgeDot) {
+    if (unreadCount > 0) {
+      badgeDot.style.display = 'block';
+    } else {
+      badgeDot.style.display = 'none';
+    }
+  }
+
+  if (!container) return;
+
+  if (notificationsData.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 24px 12px; color: var(--text-muted); font-size: 13px;">
+        🔔 No notifications currently / ಯಾವುದೇ ಸೂಚನೆಗಳಿಲ್ಲ.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = notificationsData.map(item => {
+    let icon = '📢';
+    let typeClass = 'broadcast';
+
+    if (item.type === 'reminder') {
+      icon = '⏱️';
+      typeClass = 'reminder';
+    } else if (item.type === 'event') {
+      icon = '🎲';
+      typeClass = 'event';
+    } else if (item.type === 'winner') {
+      icon = '🎉';
+      typeClass = 'winner';
+    }
+
+    return `
+      <div class="notif-card ${item.isRead ? '' : 'unread'}" onclick="markNotificationRead(${item.id})">
+        <div class="notif-icon-badge">${icon}</div>
+        <div class="notif-content">
+          <div class="notif-header-row">
+            <span class="notif-title">${item.title}</span>
+            <span class="notif-time">${item.time}</span>
+          </div>
+          <div class="notif-body">${item.body}</div>
+          <span class="notif-type-tag ${typeClass}">${item.type}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Mark single item read
+function markNotificationRead(id) {
+  const item = notificationsData.find(n => n.id === id);
+  if (item && !item.isRead) {
+    item.isRead = true;
+    renderNotificationsInbox();
+  }
+}
+
+// Mark all items read
+function markAllNotificationsRead() {
+  notificationsData.forEach(n => n.isRead = true);
+  renderNotificationsInbox();
+  showToast(currentLang === 'kn' ? 'ಎಲ್ಲಾ ಸೂಚನೆಗಳನ್ನು ಓದಲಾಗಿದೆ!' : 'All notifications marked as read!', 'info');
+}
+
+// Admin Quick Presets for Broadcast Modal
+function fillQuickNotificationPreset(presetType) {
+  const titleInput = document.getElementById('notifTitle');
+  const bodyInput = document.getElementById('notifBody');
+
+  if (presetType === 'due') {
+    if (titleInput) titleInput.value = '⏱️ Monthly Contribution Due Reminder / ಕೊಡುಗೆ ಜ್ಞಾಪನೆ';
+    if (bodyInput) bodyInput.value = 'Dear Member, monthly ₹200 Cheeti contribution is due by 10th. Please pay via UPI or Cash! / ದಿನಾಂಕ 10ರೊಳಗೆ ₹200 ಚೀಟಿ ಹಣ ಪಾವತಿಸಿ.';
+  } else if (presetType === 'draw') {
+    if (titleInput) titleInput.value = '🎲 12th Cheeti Lucky Draw Alert / 12ನೇ ತಾರೀಖಿನ ಚೀಟಿ ಡ್ರಾ';
+    if (bodyInput) bodyInput.value = 'Monthly Cheeti Lucky Draw will take place tomorrow on 12th at 6:00 PM! Good luck! / ನಾಳೆ 12ನೇ ತಾರೀಖು ಚೀಟಿ ಡ್ರಾ ನಡೆಯಲಿದೆ!';
+  }
+}
+
+// Handle Admin Broadcast Submit
+async function handleAdminSendNotificationSubmit(event) {
+  event.preventDefault();
+  const title = document.getElementById('notifTitle').value;
+  const body = document.getElementById('notifBody').value;
+
+  showSpinner('Broadcasting Notification...');
+
+  try {
+    await fetch(`${API_BASE_URL}/notifications`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, body, type: 'Broadcast' })
+    });
+  } catch (err) {
+    console.warn('Broadcast notification API error:', err.message);
+  }
+
+  hideSpinner();
+
+  const newNotif = {
+    id: Date.now(),
+    title,
+    body,
+    type: 'broadcast',
+    time: 'Just now',
+    isRead: false
+  };
+
+  notificationsData.unshift(newNotif);
+  renderNotificationsInbox();
+
+  // Send native web push to device
+  sendWebPushNotification(title, body);
+
+  closeModal('modalSendNotification');
+  showToast(currentLang === 'kn' ? 'ಎಲ್ಲಾ ಸದಸ್ಯರಿಗೆ ಪುಶ್ ಸೂಚನೆ ಕಳುಹಿಸಲಾಗಿದೆ!' : 'Broadcast push notification sent to all members!', 'success');
+  if (document.getElementById('notifTitle')) document.getElementById('notifTitle').value = '';
+  if (document.getElementById('notifBody')) document.getElementById('notifBody').value = '';
+}
+
+// Automatic Automated Reminders Check
+function checkAutomatedReminders() {
+  const today = new Date();
+  const dateNum = today.getDate();
+
+  if (dateNum >= 8 && dateNum <= 10) {
+    const existing = notificationsData.find(n => n.type === 'reminder' && n.title.includes('Due'));
+    if (!existing) {
+      notificationsData.unshift({
+        id: Date.now(),
+        title: "⏱️ Payment Reminder: Due on 10th / ಕೊಡುಗೆ ಜ್ಞಾಪನೆ",
+        body: "Monthly ₹200 contribution deadline is approaching. Please pay before 10th.",
+        type: "reminder",
+        time: "Today",
+        isRead: false
+      });
+      renderNotificationsInbox();
+    }
+  } else if (dateNum === 11 || dateNum === 12) {
+    const existing = notificationsData.find(n => n.type === 'event' && n.title.includes('Draw'));
+    if (!existing) {
+      notificationsData.unshift({
+        id: Date.now(),
+        title: "🎲 Cheeti Draw Alert: 12th Draw Today / 12ನೇ ತಾರೀಖಿನ ಚೀಟಿ ಡ್ರಾ",
+        body: "Monthly Cheeti Lucky Draw takes place today at 6:00 PM!",
+        type: "event",
+        time: "Today",
+        isRead: false
+      });
+      renderNotificationsInbox();
+    }
+  }
+}
+
