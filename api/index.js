@@ -63,6 +63,47 @@ let mockNotifications = [
   }
 ];
 
+let mockSettings = {
+  appTitleEn: "Ganesha Cheeti",
+  appTitleKn: "ಗಣೇಶ ಚೀಟಿ",
+  groupNameEn: "Sri Ganesh Friends",
+  groupNameKn: "ಶ್ರೀ ಗಣೇಶ್ ಫ್ರೆಂಡ್ಸ್",
+  monthlyContribution: 200,
+  effectiveFromMonth: "Oct 2026",
+  cheetiDrawDay: 12,
+  defaultInterestRate: 5
+};
+
+let mockCategories = [
+  { id: 'festival', code: 'FEST', nameEn: 'Festival', nameKn: 'ಹಬ್ಬ', status: 'Active', color: '#059669' },
+  { id: 'temple', code: 'TMPL', nameEn: 'Temple', nameKn: 'ದೇವಾಲಯ', status: 'Active', color: '#D97706' },
+  { id: 'pooja', code: 'POOJ', nameEn: 'Puja & Rituals', nameKn: 'ಪೂಜೆ ಮತ್ತು ಆಚರಣೆ', status: 'Active', color: '#7C3AED' },
+  { id: 'food', code: 'FOOD', nameEn: 'Food & Prasad', nameKn: 'ಊಟ ಮತ್ತು ಪ್ರಸಾದ', status: 'Active', color: '#DC2626' },
+  { id: 'other', code: 'OTHR', nameEn: 'Other', nameKn: 'ಇತರ', status: 'Active', color: '#4B5563' }
+];
+
+// SETTINGS ENDPOINTS
+app.get('/api/settings', (req, res) => {
+  res.json(mockSettings);
+});
+
+app.post('/api/settings', (req, res) => {
+  mockSettings = { ...mockSettings, ...req.body };
+  res.json({ success: true, settings: mockSettings });
+});
+
+// CATEGORIES ENDPOINTS
+app.get('/api/categories', (req, res) => {
+  res.json(mockCategories);
+});
+
+app.post('/api/categories', (req, res) => {
+  if (Array.isArray(req.body)) {
+    mockCategories = req.body;
+  }
+  res.json({ success: true, categories: mockCategories });
+});
+
 // NOTIFICATIONS ENDPOINTS
 app.get('/api/notifications', async (req, res) => {
   try {

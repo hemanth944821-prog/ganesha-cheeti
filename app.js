@@ -164,6 +164,7 @@ const expensesData = [
 
 // DOM Initialization
 document.addEventListener('DOMContentLoaded', () => {
+  loadAppStateFromLocalStorage();
   registerServiceWorker();
   fetchLiveDataFromBackend();
   renderMembersList();
@@ -213,6 +214,26 @@ function hideSpinner() {
 
 // Fetch Live Data
 async function fetchLiveDataFromBackend() {
+  try {
+    const resSettings = await fetch(`${API_BASE_URL}/settings`);
+    if (resSettings.ok) {
+      const apiSettings = await resSettings.json();
+      appConfig = { ...appConfig, ...apiSettings };
+      applyGlobalAppConfig();
+    }
+  } catch (err) {}
+
+  try {
+    const resCats = await fetch(`${API_BASE_URL}/categories`);
+    if (resCats.ok) {
+      const apiCats = await resCats.json();
+      if (Array.isArray(apiCats) && apiCats.length > 0) {
+        expenseCategories = apiCats;
+        renderCategoryDropdowns();
+      }
+    }
+  } catch (err) {}
+
   try {
     const resSummary = await fetch(`${API_BASE_URL}/summary`);
     if (resSummary.ok) {
@@ -2125,6 +2146,26 @@ function openAdminControlCenter() {
   openModal('modalAdminControlCenter');
 }
 
+function openGlobalSettingsModal() {
+  const titleEnEl = document.getElementById('cfgAppTitleEn');
+  const titleKnEl = document.getElementById('cfgAppTitleKn');
+  const groupNameEl = document.getElementById('cfgGroupName');
+  const monthlyAmtEl = document.getElementById('cfgMonthlyAmt');
+  const effectiveMonthEl = document.getElementById('cfgEffectiveMonth');
+  const drawDayEl = document.getElementById('cfgDrawDay');
+  const interestRateEl = document.getElementById('cfgInterestRate');
+
+  if (titleEnEl) titleEnEl.value = appConfig.appTitleEn;
+  if (titleKnEl) titleKnEl.value = appConfig.appTitleKn;
+  if (groupNameEl) groupNameEl.value = appConfig.groupNameEn;
+  if (monthlyAmtEl) monthlyAmtEl.value = appConfig.monthlyContribution;
+  if (effectiveMonthEl) effectiveMonthEl.value = appConfig.effectiveFromMonth;
+  if (drawDayEl) drawDayEl.value = appConfig.cheetiDrawDay;
+  if (interestRateEl) interestRateEl.value = appConfig.defaultInterestRate;
+
+  openModal('modalEditGlobalSettings');
+}
+
 function handleSaveGlobalSettingsSubmit(event) {
   event.preventDefault();
   if (!validateForm(event.target)) return;
@@ -2164,6 +2205,7 @@ function handleSaveGlobalSettingsSubmit(event) {
     }
   }
 
+  saveAppStateToLocalStorage();
   applyGlobalAppConfig();
   closeModal('modalEditGlobalSettings');
 
@@ -2171,6 +2213,57 @@ function handleSaveGlobalSettingsSubmit(event) {
     ? `ಗ್ಲೋಬಲ್ ಸೆಟ್ಟಿಂಗ್ಸ್ ಉಳಿಸಲಾಗಿದೆ! (${effectiveMonth} ರಿಂದ ತಿಂಗಳ ಮೊತ್ತ ₹${monthlyAmt})`
     : `Global settings saved! Monthly amount ₹${monthlyAmt} effective from ${effectiveMonth}.`, 'success');
 }
+
+// --- LOCALSTORAGE & BACKEND PERSISTENCE UTILITIES ---
+function saveAppStateToLocalStorage() {
+  try {
+    localStorage.setItem('ganesha_app_config', JSON.stringify(appConfig));
+    localStorage.setItem('ganesha_expense_categories', JSON.stringify(expenseCategories));
+    localStorage.setItem('ganesha_payment_submissions', JSON.stringify(paymentSubmissions));
+    localStorage.setItem('ganesha_member_payments_data', JSON.stringify(memberPaymentsData));
+
+    fetch(`${API_BASE_URL}/settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(appConfig)
+    }).catch(e => console.warn('API settings sync error:', e.message));
+
+    fetch(`${API_BASE_URL}/categories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(expenseCategories)
+    }).catch(e => console.warn('API categories sync error:', e.message));
+  } catch (err) {
+    console.warn('LocalStorage save error:', err.message);
+  }
+}
+
+function loadAppStateFromLocalStorage() {
+  try {
+    const savedConfig = localStorage.getItem('ganesha_app_config');
+    if (savedConfig) {
+      appConfig = { ...appConfig, ...JSON.parse(savedConfig) };
+    }
+
+    const savedCats = localStorage.getItem('ganesha_expense_categories');
+    if (savedCats) {
+      expenseCategories = JSON.parse(savedCats);
+    }
+
+    const savedSubs = localStorage.getItem('ganesha_payment_submissions');
+    if (savedSubs) {
+      paymentSubmissions = JSON.parse(savedSubs);
+    }
+
+    const savedPayments = localStorage.getItem('ganesha_member_payments_data');
+    if (savedPayments) {
+      memberPaymentsData = JSON.parse(savedPayments);
+    }
+  } catch (err) {
+    console.warn('LocalStorage load error:', err.message);
+  }
+}
+
 
 
 
