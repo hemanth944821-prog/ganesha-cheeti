@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ಗಣೇಶ ಚೀಟಿ - Ganesha Cheeti Community Savings App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- TOP CONTROL BAR FOR PROTOTYPE PREVIEW -->
+  <header class="global-control-bar">
+    <div class="brand-title-area">
+      <div class="brand-icon">🪔</div>
+      <div>
+        <div class="brand-name">Ganesha Cheeti (ಗಣೇಶ ಚೀಟಿ)</div>
+        <div class="brand-sub">Village Community Savings & Expense App</div>
+      </div>
+    </div>
+    <div class="controls-group">
+      <button class="btn-control" id="btnToggleView" onclick="toggleDeviceView()">🖥️ Desktop View</button>
+      <button class="lang-toggle-btn" onclick="toggleLanguage()">🌐 <span id="langBtnText">English</span></button>
+    </div>
+  </header>
+
+  <!-- VIEWPORT FRAME WRAPPER -->
+  <div class="app-viewport-wrapper" id="appViewportWrapper">
+    <div class="phone-frame">
+
+      <!-- PHONE NOTCH & STATUS BAR -->
+      <div class="phone-notch-bar">
+        <span class="phone-time">9:41</span>
+        <div class="phone-status-icons">
+          <span>📶 5G</span>
+          <span>🔋 100%</span>
+        </div>
+      </div>
+
+      <!-- MAIN SCROLLABLE SCREEN CONTAINER -->
+      <div class="screen-container">
+
+        <!-- ============================================================
+             SCREEN 1: SPLASH / WELCOME SCREEN
+             ============================================================ -->
+        <div class="screen active-screen" id="screen-splash">
+          <!-- Ganesha Vector SVG -->
+          <svg class="ganesha-hero-img" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="90" fill="#FEF3C7" stroke="#F59E0B" stroke-width="4"/>
+            <!-- Halo Crown -->
+            <path d="M100 20 L115 50 L85 50 Z" fill="#D97706"/>
+            <!-- Ganesha Head & Trunk -->
+            <path d="M70 70 C70 50, 130 50, 130 70 C130 100, 115 110, 115 130 C115 145, 100 150, 90 135 C85 125, 95 115, 100 115" stroke="#B45309" stroke-width="8" stroke-linecap="round" fill="none"/>
+            <!-- Ears -->
+            <path d="M70 65 C45 60, 45 90, 70 85 Z" fill="#F59E0B"/>
+            <path d="M130 65 C155 60, 155 90, 130 85 Z" fill="#F59E0B"/>
+            <!-- Eyes & Tilak -->
+            <circle cx="85" cy="70" r="3" fill="#78350F"/>
+            <circle cx="115" cy="70" r="3" fill="#78350F"/>
+            <path d="M100 58 L100 68 M95 62 L105 62" stroke="#DC2626" stroke-width="3"/>
+            <!-- Modak -->
+            <path d="M135 120 Q145 110, 150 125 Q145 135, 135 120 Z" fill="#D97706"/>
+          </svg>
+
+          <h1 class="splash-title-kn" data-i18n="appTitle">ಗಣೇಶ ಚೀಟಿ</h1>
+          <h2 class="splash-title-en">Ganesha Cheeti</h2>
+
+          <div class="splash-slogan-box">
+            <div class="splash-slogan-kn">ಒಟ್ಟಾಗಿ ಉಳಿತಾಯ – ಒಟ್ಟಾಗಿ ಅಭಿವೃದ್ಧಿ</div>
+            <div class="splash-slogan-en">Save Together • Grow Together</div>
+          </div>
+
+          <button class="btn-primary-wide" onclick="navigateTo('login')" data-i18n="getStarted">ಪ್ರಾರಂಭಿಸಿ / Get Started</button>
+          
+          <div class="splash-login-link">
+            Already have an account? <a href="#" onclick="navigateTo('login')">Login</a>
+          </div>
+        </div>
+
+
+        <!-- ============================================================
+             SCREEN LOGIN: PHONE & PASSWORD LOGIN
+             ============================================================ -->
+        <div class="screen" id="screen-login">
+          <div class="app-header">
+            <div class="header-left">
+              <button class="btn-back" onclick="navigateTo('splash')">←</button>
+              <div class="header-title-box">
+                <h2>Account Login</h2>
+                <p>ಖಾತೆ ಲಾಗಿನ್</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Role Demo Selector Buttons -->
+          <div style="background: #FEF3C7; border: 1px solid #F59E0B; padding: 12px; border-radius: 12px; margin-bottom: 10px;">
+            <div style="font-size: 11px; font-weight: 700; color: #92400E; margin-bottom: 8px;">🚀 Quick Demo Logins:</div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-control" style="background:#064E3B; color:white; font-size:11px;" onclick="fillDemoLogin('9876543210', 'admin123')">👑 Admin (Ganesh)</button>
+              <button class="btn-control" style="background:#D97706; color:white; font-size:11px;" onclick="fillDemoLogin('9876543216', '1234')">👤 Member (Ramesh)</button>
+            </div>
+          </div>
+
+          <form onsubmit="handleLoginSubmit(event)" class="form-card">
+            <div class="form-group">
+              <label>Phone Number / ಮೊಬೈಲ್ ಸಂಖ್ಯೆ</label>
+              <input type="tel" id="loginPhone" class="form-input" placeholder="e.g. 9876543210" required style="font-size: 16px;">
+            </div>
+
+            <div class="form-group">
+              <label>Password / ಪಾಸ್‌ವರ್ಡ್</label>
+              <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required style="font-size: 16px;">
+            </div>
+
+            <button type="submit" class="btn-primary-wide" style="margin-top: 10px;">Login / ಲಾಗಿನ್</button>
+
+            <div class="notice-box">
+              <span>🔒</span>
+              <div>Secure Member & Admin Access • ಸುರಕ್ಷಿತ ಸದಸ್ಯ ಮತ್ತು ಅಡ್ಮಿನ್ ಲಾಗಿನ್</div>
+            </div>
+          </form>
+        </div>
+
+
+        <!-- ============================================================
+             SCREEN 2: DASHBOARD / HOME SCREEN
+             ============================================================ -->
+        <div class="screen" id="screen-dashboard">
+          <!-- Top Header -->
+          <div class="app-header">
+            <div class="header-left">
+              <button class="icon-btn" onclick="navigateTo('grid')">☰</button>
+              <div class="header-title-box">
+                <h2 id="userGreetingText" data-i18n="userGreeting">ನಮಸ್ಕಾರ, Ramesh!</h2>
+                <p data-i18n="groupName">Group: Sri Ganesh Friends</p>
+              </div>
+            </div>
+            <div class="header-right">
+              <button class="icon-btn">🔔<span class="notification-dot"></span></button>
+            </div>
+          </div>
+
+          <!-- Admin Mode Indicator Banner -->
+          <div id="adminModeBanner" style="display:none; background: #991B1B; color: white; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; align-items: center; justify-content: space-between;">
+            <span>👑 Admin Control Active (ಗಣೇಶ್ - ಅಡ್ಮಿನ್)</span>
+            <button class="chip-tab" style="background: white; color: #991B1B; padding: 2px 8px; font-size: 10px;" onclick="openModal('modalChangePassword')">Change Password</button>
+          </div>
+
+          <!-- Total Savings Hero Card -->
+          <div class="total-savings-hero">
+            <div class="savings-info">
+              <label data-i18n="totalSavings">ಒಟ್ಟು ಉಳಿತಾಯ / Total Savings</label>
+              <div class="amount savings-total-val">₹ 90,000</div>
+              <span class="sub-badge" data-i18n="completedYears">(Completed 2 Years)</span>
+            </div>
+            <div class="savings-ganesha-badge">
+              <span style="font-size: 28px;">🪔</span>
+            </div>
+          </div>
+
+          <!-- 4 Grid Metric Cards -->
+          <div class="metrics-grid">
+            <div class="metric-card card-purple" onclick="navigateTo('contribution')">
+              <div class="metric-header">
+                <div class="metric-icon">📅</div>
+                <div class="metric-title" data-i18n="monthlyContribution">Monthly Contribution</div>
+              </div>
+              <div class="metric-value">₹ 200</div>
+              <div class="metric-sub" data-i18n="perMember">(per member)</div>
+            </div>
+
+            <div class="metric-card card-green" onclick="navigateTo('details')">
+              <div class="metric-header">
+                <div class="metric-icon">🗓️</div>
+                <div class="metric-title" data-i18n="nextCheeti">Next Cheeti</div>
+              </div>
+              <div class="metric-value" style="font-size: 15px;">12th Oct 2026</div>
+              <div class="metric-sub" data-i18n="nextDrawDate">(Next draw date)</div>
+            </div>
+
+            <div class="metric-card card-blue" onclick="navigateTo('details')">
+              <div class="metric-header">
+                <div class="metric-icon">👤</div>
+                <div class="metric-title" data-i18n="interestPaid">Interest (to be paid)</div>
+              </div>
+              <div class="metric-value">5% <span style="font-size: 11px;">(approx)</span></div>
+              <div class="metric-sub">(Varies as per group)</div>
+            </div>
+
+            <div class="metric-card card-orange" onclick="navigateTo('expenses')">
+              <div class="metric-header">
+                <div class="metric-icon">🎪</div>
+                <div class="metric-title" data-i18n="festivalExpenses">Festival Expenses</div>
+              </div>
+              <div class="metric-value expenses-total-val">₹ 8,450</div>
+              <div class="metric-sub" data-i18n="soFarThisYear">(so far this year)</div>
+            </div>
+          </div>
+
+          <!-- Quick Navigation Shortcuts -->
+          <div class="notice-box">
+            <span>💡</span>
+            <div data-i18n="cheetiConductNotice">ಪ್ರತಿ 12ನೇ ತಾರೀಖಿಗೆ ಚೀಟಿ ನಡೆಯುತ್ತದೆ. / Cheeti will be conducted on 12th of every month.</div>
+          </div>
+        </div>
+
+
+        <!-- ============================================================
+             SCREEN 3: CHEETI DETAILS SCREEN
+             ============================================================ -->
+        <div class="screen" id="screen-details">
+          <div class="app-header">
+            <div class="header-left">
+              <button class="btn-back" onclick="navigateTo('dashboard')">←</button>
+              <div class="header-title-box">
+                <h2 data-i18n="cheetiDetails">Cheeti Details</h2>
+                <p>ಚೀಟಿ ವಿವರಗಳು</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-list-card">
+            <div class="info-row">
+              <label>Group Name</label>
+              <span>Sri Ganesh Friends</span>
+            </div>
+            <div class="info-row">
+              <label>Monthly Contribution</label>
+              <span>₹ 200 per member</span>
+            </div>
+            <div class="info-row">
+              <label>Members</label>
+              <span>15 Active</span>
+            </div>
+            <div class="info-row">
+              <label>Cycle</label>
+              <span>12 Months (1 Year)</span>
+            </div>
+            <div class="info-row">
+              <label>Completed Years</label>
+              <span>2 Years (₹ 90,000 Saved)</span>
+            </div>
+            <div class="info-row">
+              <label>Total Savings (till now)</label>
+              <span class="savings-total-val" style="color: var(--primary-green);">₹ 90,000</span>
+            </div>
+            <div class="info-row">
+              <label>Interest Paid (till now)</label>
+              <span>₹ 4,500 (approx)</span>
+            </div>
+            <div class="info-row">
+              <label>Next Draw Date</label>
+              <span style="color: var(--accent-gold);">12th Oct 2026</span>
+            </div>
+          </div>
+
+          <div class="notice-box">
+            <span>✅</span>
+            <div>ಪ್ರತಿ 12ನೇ ತಾರೀಖಿಗೆ ಚೀಟಿ ನಡೆಯುತ್ತದೆ. Cheeti will be conducted on 12th of every month.</div>
+          </div>
+        </div>
+
+
+        <!-- ============================================================
+             SCREEN 4: MAKE CONTRIBUTION SCREEN
+             ============================================================ -->
+        <div class="screen" id="screen-contribution">
+          <div class="app-header">
+            <div class="header-left">
+              <button class="btn-back" onclick="navigateTo('dashboard')">←</button>
+              <div class="header-title-box">
+                <h2 data-i18n="makeContribution">Make Contribution</h2>
+                <p>ತಿಂಗಳ ಕೊಡುಗೆ</p>
+              </div>
+            </div>
+          </div>
+
+          <form onsubmit="handleContributionSubmit(event)" class="form-card">
+            <div class="form-group">
+              <label data-i18n="amountPerMember">Amount per Member</label>
+              <div style="font-size: 22px; font-weight: 800; color: var(--text-main);">₹ 200</div>
+            </div>
+
+            <div class="form-group">
+              <label data-i18n="yourContribution">Your Contribution</label>
+              <div class="input-box-wrapper">
+                <span class="currency-symbol">₹</span>
+                <input type="number" id="contribAmountInput" class="form-input" value="200" min="50" step="50" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label data-i18n="paymentMethod">Payment Method</label>
+              <div class="payment-options-group">
+                <div class="payment-option-card" onclick="selectPaymentMethod(this, 'cash')">
+                  <div class="payment-option-left">
+                    <div class="radio-circle"></div>
+                    <div>
+                      <div class="option-title" data-i18n="cash">Cash (Manual Entry)</div>
+                      <div class="option-sub">Pay in person to Admin</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="payment-option-card selected" onclick="selectPaymentMethod(this, 'upi')">
+                  <div class="payment-option-left">
+                    <div class="radio-circle"></div>
+                    <div>
+                      <div class="option-title">UPI <i>(hemantha@ybl)</i></div>
+                      <div class="option-sub">GooglePay, PhonePe, Paytm</div>
+                    </div>
+                  </div>
+                  <span>✏️</span>
+                </div>
+
+                <div class="payment-option-card" onclick="selectPaymentMethod(this, 'bank')">
+                  <div class="payment-option-left">
+                    <div class="radio-circle"></div>
+                    <div>
+                      <div class="option-title" data-i18n="bankTransfer">Bank Transfer</div>
+                      <div class="option-sub">NEFT / IMPS Account</div>
+                    </div>
+                  </div>
+                  <span>🏛️</span>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary-wide" style="margin-top: 10px;" data-i18n="submitContribution">Submit Contribution</button>
+
+            <div class="notice-box">
+              <span>✅</span>
+              <div>ನಿಮ್ಮ ಕೊಡುಗೆ ಯಶಸ್ವಿಯಾಗಿ ದಾಖಲಾಗುತ್ತದೆ. Your contribution will be recorded successfully.</div>
+            </div>
+          </form>
+        </div>
+
+
+        <!-- ============================================================
+             SCREEN 5: PAYOUT / WINNER SCREEN
+             ============================================================ -->
+        <div class="screen" id="screen-payouts">
+          <div class="app-header">
+            <div class="header-left">
+              <button class="btn-back" onclick="navigateTo('dashboard')">←</button>
+              <div class="header-title-box">
+                <h2 data-i18n="payoutCheetiWinner">Payout / Cheeti Winner</h2>
+                <p>ಚೀಟಿ ಗೆದ್ದವರು / ಪಾವತಿ</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Admin Winner Draw Button -->
+          <div class="admin-only-btn" style="display:none;">
+            <button class="btn-primary-wide" style="background: linear-gradient(135deg, #D97706, #B45309);" onclick="openModal('modalConductDraw')">🎲 Conduct Monthly Draw / ಚೀಟಿ ಎತ್ತಿ (Admin)</button>
+          </div>
+
+          <div class="winner-gold-card">
+            <span class="trophy-badge">🏆 <span data-i18n="lastMonthWinner">Last Month Winner</span></span>
+            
+            <div class="winner-profile-box">
+              <div class="winner-avatar" style="background:#78350F; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold;">RK</div>
+              <div style="text-align: left;">
+                <div class="winner-name">Ramesh Kumar</div>
+                <div class="winner-sub">(Member #07) • 12 Sep 2026</div>
+              </div>
+            </div>
+
+            <div class="winner-prize">₹ 2,400</div>
+          </div>
+
+          <h3 style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-top: 6px;" data-i18n="payoutHistory">Payout History</h3>
+
+          <div class="history-list">
+            <div class="history-item">
+              <div class="history-left">
+                <span class="month-badge">Jun 2026</span>
+                <div>
+                  <div class="history-name">Suresh (M#03)</div>
+                </div>
+              </div>
+              <span class="history-amount">₹ 2,400</span>
+            </div>
+
+            <div class="history-item">
+              <div class="history-left">
+                <span class="month-badge">Jul 2026</span>
+                <div>
+                  <div class="history-name">Lakshmi (M#11)</div>
+                </div>
+              </div>
+              <span class="history-amount">₹ 2,400</span>
+            </div>
+
+            <div class="history-item">
+              <div class="history-left">
+                <span class="month-badge">Aug 2026</span>
+                <div>
+                  <div class="history-name">Ravi (M#05)</div>
+                </div>
+              </div>
+              <span class="history-amount">₹ 2,400</span>
+            </div>
+
+            <div class="history-item">
+              <div class="history-left">
+                <span class="month-badge">Sep 2026</span>
+                <div>
+                  <div class="history-name">Ramesh (M#07)</div>
+                </div>
+              </div>
+              <span class="history-amount">₹ 2,400</span>
+            </div>
+          </div>
+
+          <div class="notice-box">
+            <span>ℹ️</span>
+            <div>ಮೊತ್ತವನ್ನು ಬ್ಯಾಂಕ್/UPI ಮೂಲಕ ನೀಡಲಾಗುತ್ತದೆ. Amount will be paid via Bank/UPI as per group rules.</div>
+          </div>
+        </div>
+
+
+        <!-- ============================================================
+             SCREEN 6: EXPENSES SCREEN
+             ============================================================ -->
+        <div class="screen" id="screen-expenses">
+          <div class="app-header">
+            <div class="header-left">
+              <button class="btn-back" onclick="navigateTo('dashboard')">←</button>
+              <div class="header-title-box">
+                <h2 data-i18n="expenses">Expenses</h2>
+                <p>ಖರ್ಚುಗಳು</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-tabs">
+            <button class="chip-tab active" onclick="filterExpenses('all', this)" data-i18n="all">All</button>
+            <button class="chip-tab" onclick="filterExpenses('festival', this)" data-i18n="festival">Festival</button>
+            <button class="chip-tab" onclick="filterExpenses('temple', this)" data-i18n="temple">Temple</button>
+            <button class="chip-tab" onclick="filterExpenses('other', this)" data-i18n="other">Other</button>
+          </div>
+
+          <div class="history-list" id="expensesContainer">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <button class="btn-primary-wide" onclick="openModal('modalAddExpense')" data-i18n="addExpense">+ Add Expense</button>
+        </div>
+
+
+        <!-- ============================================================
+             SCREEN 7: MEMBERS SCREEN (WITH ADMIN CRUD & SOFT DEACTIVATION)
+             ============================================================ -->
+        <div class="screen" id="screen-members">
+          <div class="app-header">
+            <div class="header-left">
+              <button class="btn-back" onclick="navigateTo('dashboard')">←</button>
+              <div class="header-title-box">
+                <h2 data-i18n="members">Members</h2>
+                <p>ಸದಸ್ಯರು</p>
+              </div>
+            </div>
+            <span class="trophy-badge" data-i18n="totalMembers">Total Members: 15</span>
+          </div>
+
+          <!-- Admin Add Member Button -->
+          <div class="admin-only-btn" style="display:none;">
+            <button class="btn-primary-wide" style="background:#064E3B;" onclick="openModal('modalAddMember')">+ Add New Member / ಹೊಸ ಸದಸ್ಯ ಸೇರಿಸಿ</button>
+          </div>
+
+          <div class="members-list" id="membersContainer">
+            <!-- Rendered dynamically with Deactivate / Edit actions for Admin -->
+          </div>
+        </div>
+
+
+        <!-- ============================================================
+             SCREEN 8: REPORTS & SUMMARY SCREEN
+             ============================================================ -->
+        <div class="screen" id="screen-reports">
+          <div class="app-header">
+            <div class="header-left">
+              <button class="btn-back" onclick="navigateTo('dashboard')">←</button>
+              <div class="header-title-box">
+                <h2 data-i18n="reportsSummary">Reports & Summary</h2>
+                <p>ವರದಿಗಳು & ಸಾರಾಂಶ</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-tabs">
+            <button class="chip-tab active">Overview</button>
+            <button class="chip-tab">Monthly</button>
+            <button class="chip-tab">Yearly</button>
+          </div>
+
+          <div class="info-list-card" style="text-align: center;">
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: 700;">Total Savings / ಒಟ್ಟು ಉಳಿತಾಯ</div>
+            <div class="savings-total-val" style="font-size: 32px; font-weight: 900; color: var(--primary-green);">₹ 90,000</div>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card card-blue">
+              <div class="metric-title">Total Interest Paid</div>
+              <div class="metric-value">₹ 4,500</div>
+              <div class="metric-sub">(approx)</div>
+            </div>
+
+            <div class="metric-card card-orange">
+              <div class="metric-title">Total Expenses</div>
+              <div class="metric-value expenses-total-val">₹ 8,450</div>
+              <div class="metric-sub">(this year)</div>
+            </div>
+          </div>
+
+          <!-- Savings Progress Chart -->
+          <div class="chart-card">
+            <div class="chart-title">Savings Progress (Last 2 Years)</div>
+            <div class="bar-chart-visual">
+              <div class="bar-column">
+                <div class="bar-fill" style="height: 50%;">
+                  <span class="bar-val">₹45,000</span>
+                </div>
+                <span class="bar-label">Year 1</span>
+              </div>
+
+              <div class="bar-column">
+                <div class="bar-fill" style="height: 100%;">
+                  <span class="bar-val">₹90,000</span>
+                </div>
+                <span class="bar-label">Year 2</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="notice-box">
+            <span>🎯</span>
+            <div data-i18n="ourGoal">ನಮ್ಮ ಗುರಿ – ಎಲ್ಲರಿಗೂ ಲಾಭ / Our goal – Benefit for all members.</div>
+          </div>
+        </div>
+
+
+        <!-- ============================================================
+             SCREEN 9: SETTINGS & PROFILE SCREEN
+             ============================================================ -->
+        <div class="screen" id="screen-settings">
+          <div class="app-header">
+            <div class="header-left">
+              <button class="btn-back" onclick="navigateTo('dashboard')">←</button>
+              <div class="header-title-box">
+                <h2 data-i18n="settings">Settings</h2>
+                <p>ಸೆಟ್ಟಿಂಗ್ಸ್</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-list-card">
+            <label style="font-weight: 700; font-size: 13px; color: var(--text-main);">Language / ಭಾಷೆ</label>
+
+            <div class="payment-options-group">
+              <div class="payment-option-card" onclick="if(currentLang!=='en') toggleLanguage();">
+                <div class="payment-option-left">
+                  <span>🇬🇧</span>
+                  <div class="option-title">English</div>
+                </div>
+              </div>
+
+              <div class="payment-option-card selected" onclick="if(currentLang!=='kn') toggleLanguage();">
+                <div class="payment-option-left">
+                  <span>🇮🇳</span>
+                  <div class="option-title">ಕನ್ನಡ (Kannada)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-menu">
+            <div class="settings-item" onclick="openModal('modalChangePassword')">
+              <div class="settings-item-left">
+                <span class="settings-icon">🔑</span>
+                <div>Change Password <br><span style="font-size: 11px; color: var(--text-muted);">(ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾಯಿಸಿ)</span></div>
+              </div>
+              <span>›</span>
+            </div>
+
+            <div class="settings-item" onclick="navigateTo('details')">
+              <div class="settings-item-left">
+                <span class="settings-icon">ℹ️</span>
+                <div>Group Information <br><span style="font-size: 11px; color: var(--text-muted);">(ಗುಂಪು ಮಾಹಿತಿ)</span></div>
+              </div>
+              <span>›</span>
+            </div>
+
+            <div class="settings-item" onclick="navigateTo('members')">
+              <div class="settings-item-left">
+                <span class="settings-icon">👥</span>
+                <div>Member List <br><span style="font-size: 11px; color: var(--text-muted);">(ಸದಸ್ಯರ ಪಟ್ಟಿ)</span></div>
+              </div>
+              <span>›</span>
+            </div>
+
+            <div class="settings-item" onclick="handleLogout()">
+              <div class="settings-item-left" style="color: #DC2626;">
+                <span class="settings-icon" style="color: #DC2626;">🚪</span>
+                <div>Logout <br><span style="font-size: 11px; color: var(--text-muted);">(ಲಾಗ್‌ಔಟ್)</span></div>
+              </div>
+              <span>›</span>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ============================================================
+             SCREEN 10: BILINGUAL GRID VIEW SCREEN
+             ============================================================ -->
+        <div class="screen" id="screen-grid">
+          <div class="app-header">
+            <div class="header-left">
+              <div class="header-title-box">
+                <h2>English ⇄ ಕನ್ನಡ</h2>
+              </div>
+            </div>
+            <button class="btn-control" onclick="toggleLanguage()">Switch</button>
+          </div>
+
+          <div class="grid-menu-container">
+            <div class="grid-menu-item" onclick="navigateTo('contribution')">
+              <div class="grid-icon-circle" style="background: var(--accent-purple);">💰</div>
+              <div class="title-en">Contributions</div>
+              <div class="title-kn">ಕೊಡುಗೆ</div>
+            </div>
+
+            <div class="grid-menu-item" onclick="navigateTo('payouts')">
+              <div class="grid-icon-circle" style="background: #EC4899;">🎁</div>
+              <div class="title-en">Payouts</div>
+              <div class="title-kn">ಪಾವತಿ</div>
+            </div>
+
+            <div class="grid-menu-item" onclick="navigateTo('expenses')">
+              <div class="grid-icon-circle" style="background: var(--accent-orange);">🎪</div>
+              <div class="title-en">Expenses</div>
+              <div class="title-kn">ಖರ್ಚುಗಳು</div>
+            </div>
+
+            <div class="grid-menu-item" onclick="navigateTo('members')">
+              <div class="grid-icon-circle" style="background: var(--accent-blue);">👥</div>
+              <div class="title-en">Members</div>
+              <div class="title-kn">ಸದಸ್ಯರು</div>
+            </div>
+
+            <div class="grid-menu-item" onclick="navigateTo('reports')">
+              <div class="grid-icon-circle" style="background: #10B981;">📊</div>
+              <div class="title-en">Reports</div>
+              <div class="title-kn">ವರದಿಗಳು</div>
+            </div>
+
+            <div class="grid-menu-item" onclick="navigateTo('settings')">
+              <div class="grid-icon-circle" style="background: #64748B;">⚙️</div>
+              <div class="title-en">Settings</div>
+              <div class="title-kn">ಸೆಟ್ಟಿಂಗ್ಸ್</div>
+            </div>
+          </div>
+
+          <div class="village-banner">
+            <h3 style="font-size: 16px;">ಒಟ್ಟಾಗಿ ಉಳಿತಾಯ – ಒಟ್ಟಾಗಿ ಅಭಿವೃದ್ಧಿ</h3>
+            <p style="font-size: 12px; opacity: 0.9;">Save Together • Grow Together</p>
+          </div>
+        </div>
+
+      </div> <!-- END SCREEN CONTAINER -->
+
+
+      <!-- STICKY BOTTOM NAVIGATION BAR -->
+      <nav class="app-bottom-nav" id="appBottomNav" style="display: none;">
+        <button class="nav-item active" data-screen="dashboard" onclick="navigateTo('dashboard')">
+          <span class="nav-icon">🏠</span>
+          <span data-i18n="home">Home</span>
+        </button>
+
+        <button class="nav-item" data-screen="contribution" onclick="navigateTo('contribution')">
+          <span class="nav-icon">💳</span>
+          <span data-i18n="contributions">Contributions</span>
+        </button>
+
+        <button class="nav-item" data-screen="payouts" onclick="navigateTo('payouts')">
+          <span class="nav-icon">🏆</span>
+          <span data-i18n="payouts">Payouts</span>
+        </button>
+
+        <button class="nav-item" data-screen="expenses" onclick="navigateTo('expenses')">
+          <span class="nav-icon">📋</span>
+          <span data-i18n="expenses">Expenses</span>
+        </button>
+
+        <button class="nav-item" data-screen="grid" onclick="navigateTo('grid')">
+          <span class="nav-icon">⋮⋮</span>
+          <span data-i18n="more">More</span>
+        </button>
+      </nav>
+
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       MODAL 1: ADD EXPENSE
+       ============================================================ -->
+  <div class="modal-overlay" id="modalAddExpense">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 data-i18n="addExpense">+ Add Expense / ಖರ್ಚು ಸೇರಿಸಿ</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalAddExpense')">✕</button>
+      </div>
+
+      <form onsubmit="handleAddExpenseSubmit(event)">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Title (English)</label>
+          <input type="text" id="expTitleEn" class="form-input" placeholder="e.g. Flower Decoration" required style="font-size: 14px;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>ಶೀರ್ಷಿಕೆ (ಕನ್ನಡ)</label>
+          <input type="text" id="expTitleKn" class="form-input" placeholder="ಉದಾ: ಹೂವಿನ ಅಲಂಕಾರ" style="font-size: 14px;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Category / ವರ್ಗ</label>
+          <select id="expCategory" class="form-input" style="font-size: 14px;">
+            <option value="festival">Festival (ಹಬ್ಬ)</option>
+            <option value="temple">Temple (ದೇವಾಲಯ)</option>
+            <option value="other">Other (ಇತರ)</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label>Amount / ಮೊತ್ತ (₹)</label>
+          <input type="number" id="expAmount" class="form-input" placeholder="500" required style="font-size: 16px;">
+        </div>
+
+        <button type="submit" class="btn-primary-wide">Save Expense / ಉಳಿಸಿ</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL 2: ADMIN ADD MEMBER
+       ============================================================ -->
+  <div class="modal-overlay" id="modalAddMember">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>+ Add Member / ಹೊಸ ಸದಸ್ಯ</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalAddMember')">✕</button>
+      </div>
+
+      <form onsubmit="handleAddMemberSubmit(event)">
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label>Name (English)</label>
+          <input type="text" id="memNameEn" class="form-input" placeholder="e.g. Basappa" required style="font-size: 14px;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label>ಹೆಸರು (ಕನ್ನಡ)</label>
+          <input type="text" id="memNameKn" class="form-input" placeholder="ಉದಾ: ಬಸಪ್ಪ" style="font-size: 14px;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label>Phone / ಮೊಬೈಲ್</label>
+          <input type="tel" id="memPhone" class="form-input" placeholder="9876543225" required style="font-size: 14px;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label>Role / ಪಾತ್ರ</label>
+          <select id="memRole" class="form-input" style="font-size: 14px;">
+            <option value="Member">Member (ಸಾಧಾರಣ ಸದಸ್ಯ)</option>
+            <option value="Admin">Admin (ಅಡ್ಮಿನ್ & ಸದಸ್ಯ)</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-primary-wide">Add Member / ಸದಸ್ಯ ಸೇರಿಸಿ</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL 3: ADMIN CHANGE PASSWORD
+       ============================================================ -->
+  <div class="modal-overlay" id="modalChangePassword">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>🔑 Change Password / ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾಯಿಸಿ</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalChangePassword')">✕</button>
+      </div>
+
+      <form onsubmit="handleChangePasswordSubmit(event)">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Select Member / ಸದಸ್ಯರನ್ನು ಆಯ್ಕೆಮಾಡಿ</label>
+          <select id="pwdMemberSelect" class="form-input" style="font-size: 14px;">
+            <!-- Options populated dynamically -->
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label>New Password / ಹೊಸ ಪಾಸ್‌ವರ್ಡ್</label>
+          <input type="password" id="newPasswordInput" class="form-input" placeholder="••••••••" required style="font-size: 16px;">
+        </div>
+
+        <button type="submit" class="btn-primary-wide">Update Password / ನವೀಕರಿಸಿ</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL 4: ADMIN CONDUCT CHIT DRAW
+       ============================================================ -->
+  <div class="modal-overlay" id="modalConductDraw">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>🎲 Conduct Draw / ಚೀಟಿ ಎತ್ತಿ</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalConductDraw')">✕</button>
+      </div>
+
+      <form onsubmit="handleConductDrawSubmit(event)">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Month & Year / ತಿಂಗಳು</label>
+          <input type="text" id="drawMonthYear" class="form-input" value="Oct 2026" required style="font-size: 14px;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Winner Member / ಗೆದ್ದ ಸದಸ್ಯರು</label>
+          <select id="drawMemberSelect" class="form-input" style="font-size: 14px;">
+            <!-- Active members -->
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label>Payout Amount Won (₹)</label>
+          <input type="number" id="drawAmountWon" class="form-input" value="2400" required style="font-size: 16px;">
+        </div>
+
+        <button type="submit" class="btn-primary-wide" style="background: linear-gradient(135deg, #D97706, #B45309);">Announce Winner / ವಿಜೇತ ಘೋಷಿಸಿ</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
