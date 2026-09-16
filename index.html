@@ -168,6 +168,7 @@
             <span>👑 Admin Control Active (ಗಣೇಶ್ - ಅಡ್ಮಿನ್)</span>
             <div style="display:flex; gap:6px; flex-wrap: wrap;">
               <button class="chip-tab" style="background: #10B981; color: white; padding: 4px 10px; font-size: 11px; font-weight: 700;" onclick="renderAdminPendingApprovalsModal()">✅ Approvals <span id="pendingApprovalsBadgeCount" style="background:#EF4444; color:white; padding:1px 6px; border-radius:10px; font-size:10px;">1</span></button>
+              <button class="chip-tab" style="background: #0D9488; color: white; padding: 4px 10px; font-size: 11px; font-weight: 700;" onclick="openManageCategoriesModal()">⚙️ Categories</button>
               <button class="chip-tab" style="background: #2563EB; color: white; padding: 4px 10px; font-size: 11px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" onclick="testAdminPushNotification()">🔔 Test Push Notif</button>
               <button class="chip-tab" style="background: #F59E0B; color: white; padding: 4px 10px; font-size: 11px;" onclick="openModal('modalSendNotification')">📢 Alert Members</button>
               <button class="chip-tab" style="background: white; color: #991B1B; padding: 4px 10px; font-size: 11px;" onclick="openModal('modalChangePassword')">Password</button>
@@ -914,20 +915,20 @@
         <button class="btn-close-modal" onclick="closeModal('modalAddMember')">✕</button>
       </div>
 
-      <form onsubmit="handleAddMemberSubmit(event)">
+      <form onsubmit="handleAddMemberSubmit(event)" novalidate>
         <div class="form-group" style="margin-bottom: 10px;">
           <label>Name (English)</label>
-          <input type="text" id="memNameEn" class="form-input" placeholder="e.g. Basappa" required>
+          <input type="text" id="memNameEn" class="form-input" placeholder="e.g. Basappa" data-validate="required" data-field-name-en="Member Name (English)" data-field-name-kn="ಸದಸ್ಯರ ಹೆಸರು (ಇಂಗ್ಲಿಷ್)">
         </div>
 
         <div class="form-group" style="margin-bottom: 10px;">
           <label>ಹೆಸರು (ಕನ್ನಡ)</label>
-          <input type="text" id="memNameKn" class="form-input" placeholder="ಉದಾ: ಬಸಪ್ಪ">
+          <input type="text" id="memNameKn" class="form-input" placeholder="ಉದಾ: ಬಸಪ್ಪ" data-validate="required" data-field-name-en="Member Name (Kannada)" data-field-name-kn="ಸದಸ್ಯರ ಹೆಸರು (ಕನ್ನಡ)">
         </div>
 
         <div class="form-group" style="margin-bottom: 10px;">
           <label>Phone / ಮೊಬೈಲ್</label>
-          <input type="tel" id="memPhone" class="form-input" placeholder="9876543225" required>
+          <input type="tel" id="memPhone" class="form-input" placeholder="9876543225" data-validate="required|phone" data-field-name-en="Phone Number" data-field-name-kn="ಮೊಬೈಲ್ ಸಂಖ್ಯೆ">
         </div>
 
         <div class="form-group" style="margin-bottom: 14px;">
@@ -1189,6 +1190,41 @@
 
         <button type="submit" class="btn-primary-wide">Re-submit for Approval / ಮರು-ಸಲ್ಲಿಸಿ</button>
       </form>
+    </div>
+  </div>
+
+  <!-- ADMIN MANAGE EXPENSE CATEGORIES MODAL -->
+  <div class="modal-overlay" id="modalManageCategories">
+    <div class="modal-box" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3>⚙️ Manage Categories / ವರ್ಗಗಳ ನಿರ್ವಹಣೆ</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalManageCategories')">✕</button>
+      </div>
+
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; font-weight: 700;">
+        Add new expense categories, or activate/deactivate existing categories for member expense entry.
+      </div>
+
+      <!-- ADD NEW CATEGORY FORM -->
+      <form onsubmit="handleAddCategorySubmit(event)" novalidate style="background:#F0FDFA; border:1px solid #99F6E4; padding:12px; border-radius:8px; margin-bottom:14px;">
+        <div style="font-weight:800; font-size:12px; color:#0F766E; margin-bottom:8px;">+ Add New Category / ಹೊಸ ವರ್ಗ ಸೇರಿಸಿ</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+          <div>
+            <label style="font-size:10px;">Name (English)</label>
+            <input type="text" id="newCatEn" class="form-input" placeholder="e.g. Catering" data-validate="required" data-field-name-en="Category Name (English)" data-field-name-kn="ವರ್ಗ ಹೆಸರು (ಇಂಗ್ಲಿಷ್)" style="padding:6px 10px; font-size:14px !important;">
+          </div>
+          <div>
+            <label style="font-size:10px;">ಹೆಸರು (ಕನ್ನಡ)</label>
+            <input type="text" id="newCatKn" class="form-input" placeholder="ಉದಾ: ಅಡುಗೆ" data-validate="required" data-field-name-en="Category Name (Kannada)" data-field-name-kn="ವರ್ಗ ಹೆಸರು (ಕನ್ನಡ)" style="padding:6px 10px; font-size:14px !important;">
+          </div>
+        </div>
+        <button type="submit" class="btn-primary-wide" style="padding:8px; font-size:11px; background:#0D9488;">Save Category / ವರ್ಗ ಉಳಿಸಿ</button>
+      </form>
+
+      <div style="font-weight:700; font-size:12px; margin-bottom:8px; color:var(--text-main);">Existing Categories / ಪಟ್ಟಿ:</div>
+      <div id="categoriesListContainer">
+        <!-- Rendered dynamically -->
+      </div>
     </div>
   </div>
 

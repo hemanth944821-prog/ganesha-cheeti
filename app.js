@@ -173,6 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateI18nText();
   updatePendingBadgeCount();
   checkMemberRejectedPaymentAlert();
+  renderCategoryDropdowns();
 });
 
 // --- CUSTOM MOBILE TOAST NOTIFICATION ENGINE (REPLACES BROWSER ALERTS) ---
@@ -527,6 +528,7 @@ async function toggleMemberStatus(memberId, newStatus) {
 // Admin Add Member
 async function handleAddMemberSubmit(event) {
   event.preventDefault();
+  if (!validateForm(event.target)) return;
   const nameEn = document.getElementById('memNameEn').value;
   const nameKn = document.getElementById('memNameKn').value || nameEn;
   const phone = document.getElementById('memPhone').value;
@@ -740,6 +742,7 @@ function handleContributionSubmit(event) {
 
 async function handleAddExpenseSubmit(event) {
   event.preventDefault();
+  if (!validateForm(event.target)) return;
   const titleEn = document.getElementById('expTitleEn').value;
   const titleKn = document.getElementById('expTitleKn').value || titleEn;
   const amount = parseInt(document.getElementById('expAmount').value, 10);
@@ -1865,6 +1868,196 @@ function handleResubmitPayment(event) {
     renderMonthWisePaymentTracker(sub.month);
   }
 }
+
+// ============================================================
+// CUSTOM FORM VALIDATION ENGINE (REPLACES BROWSER DEFAULT TOOLTIPS)
+// ============================================================
+
+function clearFormErrors(form) {
+  if (!form) return;
+  form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+  form.querySelectorAll('.form-error-msg').forEach(el => el.remove());
+}
+
+function validateForm(form) {
+  if (!form) return true;
+  clearFormErrors(form);
+
+  let isValid = true;
+  let firstInvalidInput = null;
+
+  const inputs = form.querySelectorAll('[data-validate], input[required], select[required], textarea[required]');
+
+  inputs.forEach(input => {
+    const val = input.value ? input.value.trim() : '';
+    const validateRules = input.getAttribute('data-validate') || (input.hasAttribute('required') ? 'required' : '');
+    const fieldNameEn = input.getAttribute('data-field-name-en') || input.name || 'This field';
+    const fieldNameKn = input.getAttribute('data-field-name-kn') || 'ಈ ಕ್ಷೇತ್ರ';
+
+    let errorMsg = '';
+
+    if (validateRules.includes('required') && (!val || val === '')) {
+      errorMsg = currentLang === 'kn'
+        ? `⚠️ ${fieldNameKn} ಕಡ್ಡಾಯವಾಗಿದೆ.`
+        : `⚠️ ${fieldNameEn} is required.`;
+    } else if (validateRules.includes('minlength:') && val.length > 0) {
+      const minLen = parseInt(validateRules.split('minlength:')[1], 10);
+      if (val.length < minLen) {
+        errorMsg = currentLang === 'kn'
+          ? `⚠️ ಕನಿಷ್ಠ ${minLen} ಅಕ್ಷರಗಳಿರಬೇಕು.`
+          : `⚠️ Minimum ${minLen} characters required.`;
+      }
+    } else if (validateRules.includes('number') || input.type === 'number') {
+      const num = parseFloat(val);
+      const minVal = input.hasAttribute('min') ? parseFloat(input.getAttribute('min')) : 1;
+      if (isNaN(num) || num < minVal) {
+        errorMsg = currentLang === 'kn'
+          ? `⚠️ ದಯವಿಟ್ಟು ₹${minVal} ಗಿಂತ ಹೆಚ್ಚಿನ ಮಾನ್ಯ ಮೊತ್ತವನ್ನು ನಮೂದಿಸಿ.`
+          : `⚠️ Please enter a valid amount greater than or equal to ₹${minVal}.`;
+      }
+    } else if (validateRules.includes('phone') && val.length > 0) {
+      const phoneRegex = /^[6-9]\d{9}$/;
+      if (!phoneRegex.test(val)) {
+        errorMsg = currentLang === 'kn'
+          ? `⚠️ ದಯವಿಟ್ಟು ಮಾನ್ಯ 10 ಅಂಕಿಯ ಮೊಬೈಲ್ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ.`
+          : `⚠️ Please enter a valid 10-digit mobile number.`;
+      }
+    }
+
+    if (errorMsg) {
+      isValid = false;
+      input.classList.add('is-invalid');
+      
+      const errEl = document.createElement('span');
+      errEl.className = 'form-error-msg';
+      errEl.textContent = errorMsg;
+
+      if (input.parentNode) {
+        input.parentNode.appendChild(errEl);
+      }
+
+      if (!firstInvalidInput) {
+        firstInvalidInput = input;
+      }
+    }
+  });
+
+  if (!isValid) {
+    if (firstInvalidInput) {
+      firstInvalidInput.focus();
+    }
+    showToast(currentLang === 'kn'
+      ? '❌ ದಯವಿಟ್ಟು ಮುಖ್ಯಾಂಶಗೊಳಿಸಿದ ದೋಷಗಳನ್ನು ಸರಿಪಡಿಸಿ!'
+      : '❌ Please fix highlighted errors before saving.', 'error');
+  }
+
+  return isValid;
+}
+
+// ============================================================
+// DYNAMIC EXPENSE CATEGORY MANAGEMENT ENGINE (ADD / ACTIVATE / DEACTIVATE)
+// ============================================================
+
+let expenseCategories = [
+  { id: 'festival', code: 'FEST', nameEn: 'Festival', nameKn: 'ಹಬ್ಬ', status: 'Active', color: '#059669' },
+  { id: 'temple', code: 'TMPL', nameEn: 'Temple', nameKn: 'ದೇವಾಲಯ', status: 'Active', color: '#D97706' },
+  { id: 'pooja', code: 'POOJ', nameEn: 'Puja & Rituals', nameKn: 'ಪೂಜೆ ಮತ್ತು ಆಚರಣೆ', status: 'Active', color: '#7C3AED' },
+  { id: 'food', code: 'FOOD', nameEn: 'Food & Prasad', nameKn: 'ಊಟ ಮತ್ತು ಪ್ರಸಾದ', status: 'Active', color: '#DC2626' },
+  { id: 'other', code: 'OTHR', nameEn: 'Other', nameKn: 'ಇತರ', status: 'Active', color: '#4B5563' }
+];
+
+function openManageCategoriesModal() {
+  renderCategoryManagementList();
+  openModal('modalManageCategories');
+}
+
+function renderCategoryManagementList() {
+  const container = document.getElementById('categoriesListContainer');
+  if (!container) return;
+
+  container.innerHTML = expenseCategories.map(cat => {
+    const isAct = cat.status === 'Active';
+    const name = currentLang === 'kn' ? (cat.nameKn || cat.nameEn) : cat.nameEn;
+    return `
+      <div class="category-item-card ${isAct ? '' : 'inactive'}">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="width:12px; height:12px; border-radius:50%; background:${cat.color}; display:inline-block;"></span>
+          <div>
+            <div style="font-weight:700; font-size:13px; color:var(--text-main);">${name} <span style="font-size:10px; color:var(--text-muted);">(${cat.code})</span></div>
+            <div style="font-size:10px; color:${isAct ? '#059669' : '#DC2626'}; font-weight:700;">Status: ${isAct ? 'Active ✅' : 'Deactivated ❌'}</div>
+          </div>
+        </div>
+        <button class="chip-tab" style="background:${isAct ? '#EF4444' : '#10B981'}; color:white; padding:4px 10px; font-size:11px;" onclick="toggleCategoryStatus('${cat.id}')">
+          ${isAct ? 'Deactivate / ಡೆಆಕ್ಟಿವೇಟ್' : 'Activate / ಆಕ್ಟಿವೇಟ್'}
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleCategoryStatus(catId) {
+  const cat = expenseCategories.find(c => c.id === catId);
+  if (cat) {
+    cat.status = cat.status === 'Active' ? 'Deactivated' : 'Active';
+    renderCategoryManagementList();
+    renderCategoryDropdowns();
+    showToast(currentLang === 'kn'
+      ? `ವರ್ಗ '${cat.nameKn || cat.nameEn}' ಸ್ಥಿತಿ ${cat.status === 'Active' ? 'ಆಕ್ಟಿವೇಟ್' : 'ಡೆಆಕ್ಟಿವೇಟ್'} ಮಾಡಲಾಗಿದೆ!`
+      : `Category '${cat.nameEn}' set to ${cat.status}!`, 'success');
+  }
+}
+
+function handleAddCategorySubmit(event) {
+  event.preventDefault();
+  if (!validateForm(event.target)) return;
+
+  const nameEn = document.getElementById('newCatEn').value.trim();
+  const nameKn = document.getElementById('newCatKn').value.trim() || nameEn;
+  const id = nameEn.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  const code = nameEn.substring(0, 4).toUpperCase();
+
+  const colors = ['#059669', '#D97706', '#7C3AED', '#DC2626', '#0284C7', '#2563EB', '#4B5563'];
+  const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+  expenseCategories.push({
+    id,
+    code,
+    nameEn,
+    nameKn,
+    status: 'Active',
+    color: randomColor
+  });
+
+  document.getElementById('newCatEn').value = '';
+  document.getElementById('newCatKn').value = '';
+
+  renderCategoryManagementList();
+  renderCategoryDropdowns();
+  showToast(currentLang === 'kn' ? 'ಹೊಸ ವರ್ಗ ಯಶಸ್ವಿಯಾಗಿ ಸೇರಿಸಲಾಗಿದೆ!' : 'New Category added successfully!', 'success');
+}
+
+function renderCategoryDropdowns() {
+  const select = document.getElementById('expCategory');
+  if (select) {
+    const activeCats = expenseCategories.filter(c => c.status === 'Active');
+    select.innerHTML = activeCats.map(c => {
+      const name = currentLang === 'kn' ? (c.nameKn || c.nameEn) : c.nameEn;
+      return `<option value="${c.id}">${name} (${c.nameKn})</option>`;
+    }).join('');
+  }
+
+  const filterContainer = document.getElementById('expensesFilterChipsContainer');
+  if (filterContainer) {
+    const activeCats = expenseCategories.filter(c => c.status === 'Active');
+    let html = `<button class="chip-tab active" onclick="renderExpensesList('all')">All / ಎಲ್ಲಾ</button>`;
+    html += activeCats.map(c => {
+      const name = currentLang === 'kn' ? (c.nameKn || c.nameEn) : c.nameEn;
+      return `<button class="chip-tab" onclick="renderExpensesList('${c.id}')">${name}</button>`;
+    }).join('');
+    filterContainer.innerHTML = html;
+  }
+}
+
 
 
 

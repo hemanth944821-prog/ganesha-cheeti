@@ -1037,4 +1037,44 @@ body {
   margin-top: 4px;
 }
 
+/* CUSTOM FORM VALIDATION & ERROR STYLING (REPLACES BROWSER NATIVE TOOLTIPS) */
+.form-input.is-invalid, select.form-input.is-invalid {
+  border-color: #EF4444 !important;
+  background-color: #FEF2F2 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.form-error-msg {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #DC2626;
+  margin-top: 4px;
+  padding-left: 2px;
+  animation: fadeInError 0.2s ease;
+}
+
+@keyframes fadeInError {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.category-item-card {
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+
+.category-item-card.inactive {
+  opacity: 0.55;
+  background: #F8FAFC;
+}
+
+
 
