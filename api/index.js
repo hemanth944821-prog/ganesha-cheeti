@@ -82,11 +82,24 @@ let mockCategories = [
   { id: 'other', code: 'OTHR', nameEn: 'Other', nameKn: 'ಇತರ', status: 'Active', color: '#4B5563' }
 ];
 
-// SETTINGS ENDPOINTS (MSSQL persistent & fallback)
+// SETTINGS ENDPOINTS (Reads and Writes directly to dbo.CheetiCycles and dbo.AppSettings)
 app.get('/api/settings', async (req, res) => {
   try {
     const pool = await getPool();
     if (pool) {
+      // 1. Query pre-existing dbo.CheetiCycles table
+      try {
+        const cycleRes = await pool.request().query("SELECT TOP 1 * FROM dbo.CheetiCycles WHERE Status = 'Active'");
+        if (cycleRes.recordset && cycleRes.recordset.length > 0) {
+          const c = cycleRes.recordset[0];
+          if (c.CycleName) mockSettings.groupNameEn = c.CycleName;
+          if (c.DefaultMonthlyAmount) mockSettings.monthlyContribution = c.DefaultMonthlyAmount;
+          if (c.DrawDayOfMonth) mockSettings.cheetiDrawDay = c.DrawDayOfMonth;
+          if (c.StartMonthYear) mockSettings.effectiveFromMonth = c.StartMonthYear;
+        }
+      } catch (e) {}
+
+      // 2. Query dbo.AppSettings table
       await pool.request().query(`
         IF OBJECT_ID('dbo.AppSettings', 'U') IS NULL
         BEGIN
@@ -121,6 +134,39 @@ app.post('/api/settings', async (req, res) => {
   try {
     const pool = await getPool();
     if (pool) {
+      // 1. Write directly to pre-existing dbo.CheetiCycles table
+      const groupName = req.body.groupNameEn || 'Sri Ganesh Friends';
+      const monthlyAmt = req.body.monthlyContribution || 200;
+      const drawDay = req.body.cheetiDrawDay || 12;
+      const effectiveMonth = req.body.effectiveFromMonth || 'Oct 2026';
+
+      try {
+        await pool.request()
+          .input('groupName', sql.NVarChar, groupName)
+          .input('monthlyAmt', sql.Decimal(18,2), monthlyAmt)
+          .input('drawDay', sql.Int, drawDay)
+          .input('effectiveMonth', sql.NVarChar, effectiveMonth)
+          .query(`
+            IF OBJECT_ID('dbo.CheetiCycles', 'U') IS NOT NULL
+            BEGIN
+                UPDATE dbo.CheetiCycles
+                SET CycleName = @groupName,
+                    DefaultMonthlyAmount = @monthlyAmt,
+                    DrawDayOfMonth = @drawDay
+                WHERE Status = 'Active';
+
+                IF @@ROWCOUNT = 0
+                BEGIN
+                    INSERT INTO dbo.CheetiCycles (CycleName, StartMonthYear, EndMonthYear, DefaultMonthlyAmount, TotalMembers, DrawDayOfMonth, Status)
+                    VALUES (@groupName, @effectiveMonth, 'Sep 2027', @monthlyAmt, 15, @drawDay, 'Active');
+                END
+            END
+          `);
+      } catch (e) {
+        console.error('CheetiCycles update error:', e.message);
+      }
+
+      // 2. Write to dbo.AppSettings key-value store
       await pool.request().query(`
         IF OBJECT_ID('dbo.AppSettings', 'U') IS NULL
         BEGIN
