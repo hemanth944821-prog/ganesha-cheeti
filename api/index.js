@@ -82,24 +82,145 @@ let mockCategories = [
   { id: 'other', code: 'OTHR', nameEn: 'Other', nameKn: 'ಇತರ', status: 'Active', color: '#4B5563' }
 ];
 
-// SETTINGS ENDPOINTS
-app.get('/api/settings', (req, res) => {
+// SETTINGS ENDPOINTS (MSSQL persistent & fallback)
+app.get('/api/settings', async (req, res) => {
+  try {
+    const pool = await getPool();
+    if (pool) {
+      await pool.request().query(`
+        IF OBJECT_ID('dbo.AppSettings', 'U') IS NULL
+        BEGIN
+            CREATE TABLE dbo.AppSettings (
+                SettingKey NVARCHAR(100) PRIMARY KEY,
+                SettingValue NVARCHAR(MAX) NOT NULL
+            );
+        END
+      `);
+
+      const result = await pool.request().query('SELECT * FROM dbo.AppSettings');
+      if (result.recordset && result.recordset.length > 0) {
+        const dbSettings = {};
+        result.recordset.forEach(row => {
+          try {
+            dbSettings[row.SettingKey] = JSON.parse(row.SettingValue);
+          } catch (e) {
+            dbSettings[row.SettingKey] = row.SettingValue;
+          }
+        });
+        mockSettings = { ...mockSettings, ...dbSettings };
+      }
+    }
+  } catch (err) {
+    console.error('Settings SQL error:', err.message);
+  }
   res.json(mockSettings);
 });
 
-app.post('/api/settings', (req, res) => {
+app.post('/api/settings', async (req, res) => {
   mockSettings = { ...mockSettings, ...req.body };
+  try {
+    const pool = await getPool();
+    if (pool) {
+      await pool.request().query(`
+        IF OBJECT_ID('dbo.AppSettings', 'U') IS NULL
+        BEGIN
+            CREATE TABLE dbo.AppSettings (
+                SettingKey NVARCHAR(100) PRIMARY KEY,
+                SettingValue NVARCHAR(MAX) NOT NULL
+            );
+        END
+      `);
+
+      for (const [key, val] of Object.entries(req.body)) {
+        const strVal = typeof val === 'object' ? JSON.stringify(val) : String(val);
+        await pool.request()
+          .input('key', sql.NVarChar, key)
+          .input('val', sql.NVarChar, strVal)
+          .query(`
+            MERGE dbo.AppSettings AS target
+            USING (SELECT @key AS SettingKey) AS source
+            ON (target.SettingKey = source.SettingKey)
+            WHEN MATCHED THEN UPDATE SET SettingValue = @val
+            WHEN NOT MATCHED THEN INSERT (SettingKey, SettingValue) VALUES (@key, @val);
+          `);
+      }
+    }
+  } catch (err) {
+    console.error('Save Settings SQL error:', err.message);
+  }
   res.json({ success: true, settings: mockSettings });
 });
 
-// CATEGORIES ENDPOINTS
-app.get('/api/categories', (req, res) => {
+// CATEGORIES ENDPOINTS (MSSQL persistent & fallback)
+app.get('/api/categories', async (req, res) => {
+  try {
+    const pool = await getPool();
+    if (pool) {
+      await pool.request().query(`
+        IF OBJECT_ID('dbo.ExpenseCategories', 'U') IS NULL
+        BEGIN
+            CREATE TABLE dbo.ExpenseCategories (
+                CategoryID NVARCHAR(100) PRIMARY KEY,
+                Code NVARCHAR(50) NOT NULL,
+                Name_EN NVARCHAR(150) NOT NULL,
+                Name_KN NVARCHAR(150) NOT NULL,
+                Status NVARCHAR(50) NOT NULL DEFAULT 'Active',
+                Color NVARCHAR(50) NOT NULL DEFAULT '#059669'
+            );
+        END
+      `);
+
+      const result = await pool.request().query('SELECT CategoryID as id, Code as code, Name_EN as nameEn, Name_KN as nameKn, Status as status, Color as color FROM dbo.ExpenseCategories');
+      if (result.recordset && result.recordset.length > 0) {
+        mockCategories = result.recordset;
+      }
+    }
+  } catch (err) {
+    console.error('Categories SQL error:', err.message);
+  }
   res.json(mockCategories);
 });
 
-app.post('/api/categories', (req, res) => {
+app.post('/api/categories', async (req, res) => {
   if (Array.isArray(req.body)) {
     mockCategories = req.body;
+    try {
+      const pool = await getPool();
+      if (pool) {
+        await pool.request().query(`
+          IF OBJECT_ID('dbo.ExpenseCategories', 'U') IS NULL
+          BEGIN
+              CREATE TABLE dbo.ExpenseCategories (
+                  CategoryID NVARCHAR(100) PRIMARY KEY,
+                  Code NVARCHAR(50) NOT NULL,
+                  Name_EN NVARCHAR(150) NOT NULL,
+                  Name_KN NVARCHAR(150) NOT NULL,
+                  Status NVARCHAR(50) NOT NULL DEFAULT 'Active',
+                  Color NVARCHAR(50) NOT NULL DEFAULT '#059669'
+              );
+          END
+        `);
+
+        for (const cat of req.body) {
+          await pool.request()
+            .input('id', sql.NVarChar, cat.id)
+            .input('code', sql.NVarChar, cat.code || cat.id.substring(0,4).toUpperCase())
+            .input('nameEn', sql.NVarChar, cat.nameEn)
+            .input('nameKn', sql.NVarChar, cat.nameKn || cat.nameEn)
+            .input('status', sql.NVarChar, cat.status || 'Active')
+            .input('color', sql.NVarChar, cat.color || '#059669')
+            .query(`
+              MERGE dbo.ExpenseCategories AS target
+              USING (SELECT @id AS CategoryID) AS source
+              ON (target.CategoryID = source.CategoryID)
+              WHEN MATCHED THEN UPDATE SET Code = @code, Name_EN = @nameEn, Name_KN = @nameKn, Status = @status, Color = @color
+              WHEN NOT MATCHED THEN INSERT (CategoryID, Code, Name_EN, Name_KN, Status, Color) VALUES (@id, @code, @nameEn, @nameKn, @status, @color);
+            `);
+        }
+      }
+    } catch (err) {
+      console.error('Save Categories SQL error:', err.message);
+    }
   }
   res.json({ success: true, categories: mockCategories });
 });
