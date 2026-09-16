@@ -1302,6 +1302,17 @@ function selectReportPeriodType(type, btnEl) {
   renderFinancialReportSheet();
 }
 
+// Toggle Expandable Memberwise Breakdown Accordion
+function toggleReportMemberwiseBreakdown() {
+  const container = document.getElementById('reportMemberwiseBreakdownContainer');
+  const icon = document.getElementById('memberwiseArrowIcon');
+  if (container) {
+    const isHidden = container.style.display === 'none';
+    container.style.display = isHidden ? 'block' : 'none';
+    if (icon) icon.textContent = isHidden ? '▲' : '▼';
+  }
+}
+
 // Render Financial Ledger Statement (OB, Inflow, Outflow, CB)
 function renderFinancialReportSheet() {
   const container = document.getElementById('reportFinancialSheet');
@@ -1312,6 +1323,11 @@ function renderFinancialReportSheet() {
   let interestInflow = 750;
   let payoutOutflow = 2400;
   let expenseOutflow = 1200;
+  let monthKey = 'Oct 2026';
+
+  if (selVal.includes('Sep')) monthKey = 'Sep 2026';
+  else if (selVal.includes('Aug')) monthKey = 'Aug 2026';
+  else if (selVal.includes('Jul')) monthKey = 'Jul 2026';
 
   if (selectedReportPeriodTypeVal === 'quarterly') {
     ob = 81000;
@@ -1333,46 +1349,98 @@ function renderFinancialReportSheet() {
 
   if (!container) return;
 
+  // Build Memberwise Breakdown List
+  const records = memberPaymentsData[monthKey] || membersData.map((m, idx) => ({
+    memberId: m.id,
+    nameEn: m.nameEn,
+    nameKn: m.nameKn,
+    code: m.code,
+    amount: idx < 12 ? 200 : 0,
+    interest: idx < 12 ? 50 : 0,
+    date: idx < 12 ? '10th of Month' : null,
+    method: idx < 12 ? 'UPI' : null,
+    isPaid: idx < 12
+  }));
+
+  const memberwiseHtml = records.map(r => {
+    const name = (currentLang === 'kn') ? (r.nameKn || r.nameEn) : r.nameEn;
+    const totalPaid = r.amount + r.interest;
+    return `
+      <div class="memberwise-row-item">
+        <div style="flex: 1;">
+          <div style="font-weight: 700; color: var(--text-main);">${r.code} - ${name}</div>
+          <div style="font-size: 10px; color: var(--text-muted);">
+            Cheeti: ₹${r.amount} + Interest: ₹${r.interest} ${r.method ? `(${r.method})` : ''}
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-weight: 800; color: ${r.isPaid ? '#047857' : '#DC2626'};">
+            ${r.isPaid ? `₹ ${totalPaid}` : '₹ 0 (Pending)'}
+          </div>
+          <span style="font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: ${r.isPaid ? '#D1FAE5' : '#FEE2E2'}; color: ${r.isPaid ? '#047857' : '#B91C1C'};">
+            ${r.isPaid ? 'PAID' : 'PENDING'}
+          </span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
   container.innerHTML = `
     <div class="ledger-title-header">
       <span>📊 Financial Statement (${selVal})</span>
-      <span style="font-size:11px; background:#D1FAE5; color:#047857; padding:2px 6px; border-radius:4px;">Audited</span>
+      <span style="font-size:11px; background:#D1FAE5; color:#047857; padding:2px 6px; border-radius:4px; font-weight:700;">Audited</span>
     </div>
 
     <!-- Opening Balance -->
     <div class="ledger-row ledger-row-ob">
-      <span>🏛️ Opening Balance (OB) / ಆರಂಭಿಕ ಶಿಲ್ಕು</span>
-      <span>₹ ${ob.toLocaleString()}</span>
+      <div class="ledger-label">🏛️ Opening Balance (OB) / ಆರಂಭಿಕ ಶಿಲ್ಕು</div>
+      <div class="ledger-val">₹ ${ob.toLocaleString()}</div>
     </div>
 
     <!-- Inflow / Collections -->
-    <div class="ledger-row">
-      <span class="ledger-add">➕ Member Savings Collection (15 Members × ₹200)</span>
-      <span class="ledger-add">+ ₹ ${savingsInflow.toLocaleString()}</span>
+    <div class="ledger-row ledger-add">
+      <div class="ledger-label">➕ Member Savings Collection (15 Members × ₹200)</div>
+      <div class="ledger-val">+ ₹ ${savingsInflow.toLocaleString()}</div>
     </div>
-    <div class="ledger-row">
-      <span class="ledger-add">➕ Monthly Loan Interest Collected (₹50/member)</span>
-      <span class="ledger-add">+ ₹ ${interestInflow.toLocaleString()}</span>
+    <div class="ledger-row ledger-add">
+      <div class="ledger-label">➕ Monthly Loan Interest Collected (₹50/member)</div>
+      <div class="ledger-val">+ ₹ ${interestInflow.toLocaleString()}</div>
+    </div>
+
+    <!-- EXPANDABLE MEMBERWISE BREAKDOWN ACCORDION TRIGGER -->
+    <button type="button" class="btn-extend-breakdown" onclick="toggleReportMemberwiseBreakdown()">
+      <span>🔍 Click to Extend & View Memberwise Paid Amount (Monthly + Interest)</span>
+      <span id="memberwiseArrowIcon">▼</span>
+    </button>
+
+    <div id="reportMemberwiseBreakdownContainer" class="memberwise-expand-card" style="display: none;">
+      <div style="font-size: 11px; font-weight: 800; color: var(--primary-green); margin-bottom: 8px; border-bottom: 1px solid #CBD5E1; padding-bottom: 4px;">
+        👤 Memberwise Paid Breakdown (Monthly ₹200 + Interest ₹50)
+      </div>
+      ${memberwiseHtml}
+      <div style="font-size: 11px; font-weight: 800; color: #065F46; text-align: right; margin-top: 8px; padding-top: 6px; border-top: 1.5px solid #10B981;">
+        Subtotal Collections: ₹ ${totalInflow.toLocaleString()}
+      </div>
     </div>
 
     <!-- Outflow / Deductions -->
-    <div class="ledger-row">
-      <span class="ledger-deduct">➖ Cheeti Winner Payout Distributed</span>
-      <span class="ledger-deduct">- ₹ ${payoutOutflow.toLocaleString()}</span>
+    <div class="ledger-row ledger-deduct">
+      <div class="ledger-label">➖ Cheeti Winner Payout Distributed</div>
+      <div class="ledger-val">- ₹ ${payoutOutflow.toLocaleString()}</div>
     </div>
-    <div class="ledger-row">
-      <span class="ledger-deduct">➖ Festival & Temple Group Expenses</span>
-      <span class="ledger-deduct">- ₹ ${expenseOutflow.toLocaleString()}</span>
+    <div class="ledger-row ledger-deduct">
+      <div class="ledger-label">➖ Festival & Temple Group Expenses</div>
+      <div class="ledger-val">- ₹ ${expenseOutflow.toLocaleString()}</div>
     </div>
 
     <!-- Closing Balance -->
     <div class="ledger-row ledger-row-cb">
-      <span>💰 Net Closing Balance (CB) / ಅಂತಿಮ ಶಿಲ್ಕು</span>
-      <span>₹ ${cb.toLocaleString()}</span>
+      <div class="ledger-label">💰 Net Closing Balance (CB) / ಅಂತಿಮ ಶಿಲ್ಕು</div>
+      <div class="ledger-val">₹ ${cb.toLocaleString()}</div>
     </div>
 
     <div style="font-size:10px; color:var(--text-muted); text-align:center; margin-top:8px;">
-      Formula: CB = Opening Balance (₹${ob.toLocaleString()}) + Inflows (₹${totalInflow.toLocaleString()}) - Outflows (₹${totalOutflow.toLocaleString()})
+      Formula: CB = OB (₹${ob.toLocaleString()}) + Inflows (₹${totalInflow.toLocaleString()}) - Outflows (₹${totalOutflow.toLocaleString()})
     </div>
   `;
 }
