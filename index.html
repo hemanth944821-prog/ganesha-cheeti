@@ -164,11 +164,12 @@
           </div>
 
           <!-- Admin Mode Indicator Banner -->
-          <div id="adminModeBanner" style="display:none; background: #991B1B; color: white; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; align-items: center; justify-content: space-between;">
+          <div id="adminModeBanner" style="display:none; background: #991B1B; color: white; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
             <span>👑 Admin Control Active (ಗಣೇಶ್ - ಅಡ್ಮಿನ್)</span>
-            <div style="display:flex; gap:6px;">
-              <button class="chip-tab" style="background: #F59E0B; color: white; padding: 3px 8px; font-size: 10px;" onclick="openModal('modalSendNotification')">📢 Alert Members</button>
-              <button class="chip-tab" style="background: white; color: #991B1B; padding: 3px 8px; font-size: 10px;" onclick="openModal('modalChangePassword')">Password</button>
+            <div style="display:flex; gap:6px; flex-wrap: wrap;">
+              <button class="chip-tab" style="background: #2563EB; color: white; padding: 4px 10px; font-size: 11px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" onclick="testAdminPushNotification()">🔔 Test Push Notif</button>
+              <button class="chip-tab" style="background: #F59E0B; color: white; padding: 4px 10px; font-size: 11px;" onclick="openModal('modalSendNotification')">📢 Alert Members</button>
+              <button class="chip-tab" style="background: white; color: #991B1B; padding: 4px 10px; font-size: 11px;" onclick="openModal('modalChangePassword')">Password</button>
             </div>
           </div>
 
@@ -181,6 +182,17 @@
             </div>
             <div class="savings-ganesha-badge">
               <img src="ganesha_avatar.png" alt="Ganesha Badge">
+            </div>
+          </div>
+
+          <!-- TEMPORARY ADMIN PUSH NOTIFICATION TEST CARD FOR HOME SCREEN -->
+          <div id="adminPushTestHomeCard" style="display:none; margin: 10px 0; background: linear-gradient(135deg, #1E40AF, #1E3A8A); color: white; padding: 12px 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-md);">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+              <div>
+                <div style="font-size: 13px; font-weight: 700;">🧪 Admin Test: System Push Notification</div>
+                <div style="font-size: 11px; opacity: 0.9; margin-top: 2px;">ಕ್ಲಿಕ್ ಮಾಡಿ ಬ್ರೌಸರ್ ಸಿಸ್ಟಮ್ ನೋಟಿಫಿಕೇಶನ್ ಪರೀಕ್ಷಿಸಿ</div>
+              </div>
+              <button class="btn-primary-wide" style="width: auto; padding: 8px 16px; font-size: 12px; background: #F59E0B; color: #000; font-weight: 800; border: none; white-space: nowrap; border-radius: 8px;" onclick="testAdminPushNotification()">🔔 Test System Notification</button>
             </div>
           </div>
 

@@ -356,6 +356,7 @@ async function handleLoginSubmit(event) {
 function applyUserSession() {
   const greeting = document.getElementById('userGreetingText');
   const banner = document.getElementById('adminModeBanner');
+  const testCard = document.getElementById('adminPushTestHomeCard');
   const adminBtns = document.querySelectorAll('.admin-only-btn');
   const headerAvatar = document.getElementById('userAvatarHeader');
 
@@ -370,9 +371,11 @@ function applyUserSession() {
 
     if (currentUser.Role === 'Admin') {
       if (banner) banner.style.display = 'flex';
+      if (testCard) testCard.style.display = 'block';
       adminBtns.forEach(b => b.style.display = 'block');
     } else {
       if (banner) banner.style.display = 'none';
+      if (testCard) testCard.style.display = 'none';
       adminBtns.forEach(b => b.style.display = 'none');
     }
     populateProfileModal();
@@ -399,7 +402,9 @@ function populateProfileModal() {
 function handleLogout() {
   currentUser = null;
   const banner = document.getElementById('adminModeBanner');
+  const testCard = document.getElementById('adminPushTestHomeCard');
   if (banner) banner.style.display = 'none';
+  if (testCard) testCard.style.display = 'none';
   document.querySelectorAll('.admin-only-btn').forEach(b => b.style.display = 'none');
   showToast(currentLang === 'kn' ? 'ಯಶಸ್ವಿಯಾಗಿ ಲಾಗ್‌ಔಟ್ ಆಗಿದೆ' : 'Logged out successfully', 'info');
   navigateTo('splash');
@@ -1017,4 +1022,45 @@ function checkAutomatedReminders() {
     }
   }
 }
+
+// Temporary Admin Test for System Push Notification
+async function testAdminPushNotification() {
+  if (!('Notification' in window)) {
+    showToast(currentLang === 'kn' ? 'ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಸಿಸ್ಟಮ್ ಪುಶ್ ಅಧಿಸೂಚನೆಗಳು ಬೆಂಬಲಿತವಾಗಿಲ್ಲ.' : 'System Push notifications not supported in this browser.', 'error');
+    return;
+  }
+
+  let perm = Notification.permission;
+  if (perm !== 'granted') {
+    try {
+      perm = await Notification.requestPermission();
+    } catch (e) {
+      console.warn('Request permission error:', e.message);
+    }
+  }
+
+  if (perm === 'granted') {
+    const title = '🔔 Admin System Push Test / ಅಡ್ಮಿನ್ ನೋಟಿಫಿಕೇಶನ್';
+    const body = 'Hello Admin (Ganesh)! System Web Push notification is working perfectly on your device!';
+    
+    // Trigger System Browser Push Notification
+    sendWebPushNotification(title, body);
+
+    // Also add to local notification inbox & update badge
+    notificationsData.unshift({
+      id: Date.now(),
+      title: title,
+      body: body,
+      type: 'broadcast',
+      time: 'Just now',
+      isRead: false
+    });
+    renderNotificationsInbox();
+
+    showToast(currentLang === 'kn' ? '🔔 ಬ್ರೌಸರ್ ಸಿಸ್ಟಮ್ ನೋಟಿಫಿಕೇಶನ್ ಕಳುಹಿಸಲಾಗಿದೆ!' : '🔔 Browser system push notification sent successfully!', 'success');
+  } else {
+    showToast(currentLang === 'kn' ? 'ಅಧಿಸೂಚನೆಗಳ ಅನುಮತಿಯನ್ನು ನೀಡಿ (Allow notifications).' : 'Please allow notifications in browser settings to see system popups.', 'warning');
+  }
+}
+
 
