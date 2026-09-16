@@ -1,10 +1,10 @@
 /* ============================================================
-   Ganesha Cheeti (ಗಣೇಶ ಚೀಟಿ) - Native Mobile App Styling (PWA)
-   Color Palette: Deep Emerald Green (#064E3B), Gold Accent (#D97706),
-   Advanced Mobile UI, Smooth Animations, Custom Toast & Loaders.
+   Ganesha Cheeti (ಗಣೇಶ ಚೀಟಿ) - Native Mobile App Styling (iPhone 15 & Android)
+   Font: Plus Jakarta Sans & Noto Sans Kannada
+   Touch: Anti-Zoom manipulation, iOS Safari reset, Full width buttons.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Kannada:wght@400;500;600;700;800&display=swap');
 
 :root {
   --primary-green: #064E3B;
@@ -19,7 +19,7 @@
   --accent-blue: #0EA5E9;
   --accent-blue-light: #E0F2FE;
   
-  --bg-app: #F1F5F9;
+  --bg-app: #F8FAFC;
   --bg-card: #FFFFFF;
   --text-main: #0F172A;
   --text-muted: #64748B;
@@ -38,8 +38,10 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Noto Sans Kannada', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Noto Sans Kannada', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
 }
 
 html, body {
@@ -61,18 +63,15 @@ body {
 .app-spinner-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(6, 78, 59, 0.75);
+  background: rgba(6, 78, 59, 0.8);
   backdrop-filter: blur(6px);
   display: none;
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  animation: fadeIn 0.2s ease-in;
 }
 
-.app-spinner-overlay.active {
-  display: flex;
-}
+.app-spinner-overlay.active { display: flex; }
 
 .spinner-box {
   background: white;
@@ -104,7 +103,7 @@ body {
   color: var(--primary-green);
 }
 
-/* --- CUSTOM TOAST NOTIFICATION STYLING --- */
+/* --- CUSTOM TOAST NOTIFICATIONS --- */
 .toast-container {
   position: fixed;
   bottom: 24px;
@@ -143,7 +142,7 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- TOP GLOBAL HEADER CONTROL BAR (DESKTOP ONLY) --- */
+/* --- TOP GLOBAL CONTROL BAR (DESKTOP) --- */
 .global-control-bar {
   width: 100%;
   max-width: 1000px;
@@ -160,12 +159,13 @@ body {
 }
 
 .brand-title-area { display: flex; align-items: center; gap: 10px; }
-.brand-icon {
-  width: 32px; height: 32px;
-  background: linear-gradient(135deg, var(--accent-gold), #B45309);
+
+.brand-icon-img {
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  color: white; font-weight: bold; font-size: 18px;
+  object-fit: cover;
+  border: 2px solid var(--accent-gold);
 }
 
 .brand-name {
@@ -177,6 +177,7 @@ body {
 
 .brand-sub { font-size: 10px; color: #9CA3AF; }
 .controls-group { display: flex; align-items: center; gap: 10px; }
+
 .btn-control {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -186,6 +187,7 @@ body {
   font-size: 12px; font-weight: 600;
   cursor: pointer;
   display: flex; align-items: center; gap: 4px;
+  -webkit-appearance: none;
 }
 
 .lang-toggle-btn {
@@ -194,6 +196,7 @@ body {
   padding: 6px 14px; border-radius: 20px;
   font-weight: 700; cursor: pointer;
   display: flex; align-items: center; gap: 6px; font-size: 12px;
+  -webkit-appearance: none;
 }
 
 /* --- MAIN APP VIEWPORT CONTAINER --- */
@@ -224,7 +227,7 @@ body {
   display: flex; flex-direction: column;
 }
 
-/* Common Screen Header */
+/* Common Header */
 .app-header {
   background: linear-gradient(135deg, var(--primary-green), #047857);
   color: white; padding: 14px 16px;
@@ -234,12 +237,14 @@ body {
 }
 
 .app-header .header-left { display: flex; align-items: center; gap: 12px; }
+
 .btn-back {
   background: rgba(255, 255, 255, 0.15);
   border: none; color: white;
   width: 32px; height: 32px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 16px;
+  -webkit-appearance: none;
 }
 
 .header-title-box h2 { font-size: 16px; font-weight: 700; line-height: 1.2; }
@@ -252,6 +257,7 @@ body {
   width: 36px; height: 36px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; position: relative;
+  -webkit-appearance: none;
 }
 
 .notification-dot {
@@ -273,13 +279,14 @@ body {
   background: none; border: none; color: #64748B;
   font-size: 10px; font-weight: 600; cursor: pointer;
   width: 20%; padding: 6px 0; transition: var(--transition);
+  -webkit-appearance: none;
 }
 
 .nav-item .nav-icon { font-size: 18px; transition: transform 0.2s ease; }
 .nav-item.active { color: var(--primary-green); }
 .nav-item.active .nav-icon { transform: translateY(-2px) scale(1.1); }
 
-/* --- SMOOTH HARDWARE ACCELERATED SCREEN TRANSITIONS --- */
+/* --- SCREEN TRANSITIONS --- */
 .screen {
   display: none; padding: 14px; flex: 1;
   flex-direction: column; gap: 14px;
@@ -295,19 +302,112 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- REDESIGNED ADVANCED LOGIN CARD --- */
+/* --- SPLASH SCREEN --- */
+#screen-splash {
+  background: linear-gradient(180deg, #FEFCE8 0%, #E6F4EA 50%, #064E3B 100%);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 20px;
+  color: var(--text-main);
+  min-height: 100%;
+}
+
+.ganesha-hero-img {
+  width: 190px;
+  height: 190px;
+  object-fit: contain;
+  margin-bottom: 14px;
+  filter: drop-shadow(0 8px 16px rgba(217, 119, 6, 0.3));
+  border-radius: 50%;
+  background: #FFF;
+  padding: 6px;
+  border: 4px solid var(--accent-gold);
+}
+
+.splash-title-kn {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--primary-green);
+  margin-bottom: 4px;
+}
+
+.splash-title-en {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent-gold);
+  margin-bottom: 16px;
+}
+
+.splash-slogan-box {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+  border: 1px solid rgba(6, 78, 59, 0.15);
+}
+
+.splash-slogan-kn {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary-green-dark);
+}
+
+.splash-slogan-en {
+  font-size: 13px;
+  color: var(--accent-gold);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* BUTTON STYLING (iOS SAFARI PROPER PADDING & FULL WIDTH) */
+.btn-primary-wide {
+  width: 100% !important;
+  min-height: 48px;
+  padding: 12px 18px;
+  border-radius: 25px;
+  background: linear-gradient(135deg, var(--primary-green), #047857) !important;
+  color: #FFFFFF !important;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  box-shadow: 0 4px 14px rgba(6, 78, 59, 0.3);
+  margin-top: 6px;
+}
+
+.splash-login-link {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #FFFFFF;
+}
+
+.splash-login-link a {
+  color: #FDE68A;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* --- ADVANCED LOGIN CARD --- */
 .login-card-advanced {
   background: white;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
   overflow: hidden;
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 .login-header-graphic {
   background: linear-gradient(135deg, var(--primary-green), #047857);
   color: white;
-  padding: 24px 20px;
+  padding: 20px;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -315,17 +415,14 @@ body {
   gap: 6px;
 }
 
-.login-brand-icon {
-  width: 50px;
-  height: 50px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(4px);
+.login-avatar-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  background: white;
+  padding: 3px;
+  border: 2px solid var(--accent-gold);
 }
 
 .login-header-graphic h3 {
@@ -361,9 +458,10 @@ body {
   cursor: pointer;
   font-size: 16px;
   opacity: 0.6;
+  -webkit-appearance: none;
 }
 
-/* Custom Admin Checkbox Selector */
+/* Admin Checkbox Selector */
 .checkbox-admin-wrapper {
   background: #F8FAFC;
   border: 1.5px solid #E2E8F0;
@@ -408,10 +506,6 @@ body {
   transition: var(--transition);
 }
 
-.checkbox-container:hover input ~ .checkmark {
-  background-color: #94A3B8;
-}
-
 .checkbox-container input:checked ~ .checkmark {
   background-color: var(--accent-gold);
 }
@@ -441,8 +535,6 @@ body {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-size: 16px;
-  padding: 14px;
 }
 
 .quick-demo-chips {
@@ -458,7 +550,6 @@ body {
   padding: 5px 12px;
   border-radius: 16px;
   cursor: pointer;
-  transition: var(--transition);
 }
 
 .chip-admin { background: #FEF3C7; color: #78350F; border: 1px solid #F59E0B; }
@@ -478,7 +569,7 @@ body {
   box-shadow: 0 6px 16px rgba(217, 119, 6, 0.3);
 }
 
-/* Dashboard & Info Cards */
+/* Dashboard Cards */
 .total-savings-hero {
   background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
   border: 1px solid #F59E0B; border-radius: var(--radius-md);
@@ -489,9 +580,14 @@ body {
 .savings-info label { font-size: 12px; font-weight: 700; color: #92400E; text-transform: uppercase; }
 .savings-info .amount { font-size: 28px; font-weight: 800; color: #78350F; margin: 4px 0; }
 .savings-info .sub-badge { background: #F59E0B; color: white; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; }
+
 .savings-ganesha-badge {
-  width: 54px; height: 54px; background: white; border-radius: 50%;
+  width: 58px; height: 58px; background: white; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(180, 83, 9, 0.2);
+  padding: 2px; border: 2px solid var(--accent-gold);
+}
+.savings-ganesha-badge img {
+  width: 48px; height: 48px; object-fit: contain; border-radius: 50%;
 }
 
 .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -541,10 +637,15 @@ body {
 .form-group label { font-size: 13px; font-weight: 700; }
 .input-box-wrapper { position: relative; display: flex; align-items: center; }
 .currency-symbol { position: absolute; left: 14px; font-weight: 700; font-size: 18px; color: var(--text-muted); }
-.form-input {
-  width: 100%; padding: 12px 14px; font-size: 15px; font-weight: 600;
+
+/* FONT SIZE 16px ON INPUTS TO PREVENT iOS SAFARI AUTO-ZOOM ON DOUBLE CLICK / FOCUS */
+.form-input, select.form-input {
+  width: 100%; padding: 12px 14px;
+  font-size: 16px !important;
+  font-weight: 600;
   color: var(--text-main); border: 2px solid #E2E8F0; border-radius: var(--radius-sm);
   background: #F8FAFC; outline: none; transition: var(--transition);
+  -webkit-appearance: none;
 }
 .form-input:focus { border-color: var(--primary-green); background: white; }
 
@@ -609,6 +710,7 @@ body {
 .chip-tab {
   background: white; border: 1px solid #E2E8F0; padding: 6px 14px; border-radius: 20px;
   font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; white-space: nowrap;
+  -webkit-appearance: none;
 }
 .chip-tab.active { background: var(--primary-green); color: white; border-color: var(--primary-green); }
 
@@ -646,14 +748,16 @@ body {
 
 .modal-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); display: none;
+  background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px); display: none;
   align-items: center; justify-content: center; z-index: 1000;
 }
 .modal-overlay.active { display: flex; }
+
 .modal-box {
-  background: white; width: 90%; max-width: 420px; border-radius: var(--radius-md);
+  background: white; width: 92%; max-width: 420px; border-radius: var(--radius-md);
   padding: 20px; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; gap: 14px;
   animation: popUp 0.25s ease-out;
+  max-height: 90vh; overflow-y: auto;
 }
 
 @keyframes popUp {
@@ -666,7 +770,7 @@ body {
   border-bottom: 1px solid var(--border-light); padding-bottom: 10px;
 }
 .modal-header h3 { font-size: 16px; font-weight: 700; color: var(--primary-green); }
-.btn-close-modal { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
+.btn-close-modal { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); -webkit-appearance: none; }
 
 @media (max-width: 768px) {
   .global-control-bar { display: none; }

@@ -15,7 +15,7 @@
   <!-- TOP CONTROL BAR FOR DESKTOP PROTOTYPE PREVIEW -->
   <header class="global-control-bar">
     <div class="brand-title-area">
-      <div class="brand-icon">🪔</div>
+      <img src="ganesha_avatar.png" class="brand-icon-img" alt="Ganesha">
       <div>
         <div class="brand-name">Ganesha Cheeti (ಗಣೇಶ ಚೀಟಿ)</div>
         <div class="brand-sub">Village Community Savings & Expense App</div>
@@ -50,22 +50,12 @@
              ============================================================ -->
         <div class="screen active-screen" id="screen-splash">
           <!-- Language Toggle Floating Button -->
-          <div style="width: 100%; display: flex; justify-content: flex-end; margin-bottom: 10px;">
+          <div style="width: 100%; display: flex; justify-content: flex-end; margin-bottom: 6px;">
             <button class="lang-toggle-btn" onclick="toggleLanguage()">🌐 <span class="lang-btn-text">English</span></button>
           </div>
 
-          <!-- Ganesha Vector SVG -->
-          <svg class="ganesha-hero-img" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="100" cy="100" r="90" fill="#FEF3C7" stroke="#F59E0B" stroke-width="4"/>
-            <path d="M100 20 L115 50 L85 50 Z" fill="#D97706"/>
-            <path d="M70 70 C70 50, 130 50, 130 70 C130 100, 115 110, 115 130 C115 145, 100 150, 90 135 C85 125, 95 115, 100 115" stroke="#B45309" stroke-width="8" stroke-linecap="round" fill="none"/>
-            <path d="M70 65 C45 60, 45 90, 70 85 Z" fill="#F59E0B"/>
-            <path d="M130 65 C155 60, 155 90, 130 85 Z" fill="#F59E0B"/>
-            <circle cx="85" cy="70" r="3" fill="#78350F"/>
-            <circle cx="115" cy="70" r="3" fill="#78350F"/>
-            <path d="M100 58 L100 68 M95 62 L105 62" stroke="#DC2626" stroke-width="3"/>
-            <path d="M135 120 Q145 110, 150 125 Q145 135, 135 120 Z" fill="#D97706"/>
-          </svg>
+          <!-- Lord Ganesha Artwork Image -->
+          <img src="ganesha_avatar.png" class="ganesha-hero-img" alt="Lord Ganesha">
 
           <h1 class="splash-title-kn" data-i18n="appTitle">ಗಣೇಶ ಚೀಟಿ</h1>
           <h2 class="splash-title-en">Ganesha Cheeti</h2>
@@ -84,7 +74,7 @@
 
 
         <!-- ============================================================
-             SCREEN LOGIN: REDESIGNED ADVANCED LOGIN WITH ADMIN CHECKBOX
+             SCREEN LOGIN: ADVANCED LOGIN WITH ADMIN CHECKBOX
              ============================================================ -->
         <div class="screen" id="screen-login">
           <div class="app-header">
@@ -100,7 +90,7 @@
 
           <div class="login-card-advanced">
             <div class="login-header-graphic">
-              <div class="login-brand-icon">🪔</div>
+              <img src="ganesha_avatar.png" class="login-avatar-img" alt="Ganesha Avatar">
               <h3>Ganesha Cheeti</h3>
               <p>Village Savings & Cheeti Portal</p>
             </div>
@@ -139,7 +129,7 @@
                 <span style="font-size: 18px;">➔</span>
               </button>
 
-              <!-- Subtle Quick Demo Chips -->
+              <!-- Quick Demo Chips -->
               <div class="quick-demo-chips">
                 <span class="demo-chip chip-admin" onclick="fillDemoLogin('9876543210', 'admin123', true)">👑 Admin Demo</span>
                 <span class="demo-chip chip-member" onclick="fillDemoLogin('9876543216', '1234', false)">👤 Member Demo</span>
@@ -184,7 +174,7 @@
               <span class="sub-badge" data-i18n="completedYears">(Completed 2 Years)</span>
             </div>
             <div class="savings-ganesha-badge">
-              <span style="font-size: 28px;">🪔</span>
+              <img src="ganesha_avatar.png" alt="Ganesha Badge">
             </div>
           </div>
 
@@ -316,7 +306,7 @@
               <label data-i18n="yourContribution">Your Contribution</label>
               <div class="input-box-wrapper">
                 <span class="currency-symbol">₹</span>
-                <input type="number" id="contribAmountInput" class="form-input" value="200" min="50" step="50" required style="padding-left: 34px;">
+                <input type="number" id="contribAmountInput" class="form-input" value="200" min="50" step="50" required style="padding-left: 36px;">
               </div>
             </div>
 
@@ -746,9 +736,7 @@
   </div>
 
 
-  <!-- ============================================================
-       MODAL 1: ADD EXPENSE
-       ============================================================ -->
+  <!-- MODALS -->
   <div class="modal-overlay" id="modalAddExpense">
     <div class="modal-box">
       <div class="modal-header">
@@ -759,17 +747,17 @@
       <form onsubmit="handleAddExpenseSubmit(event)">
         <div class="form-group" style="margin-bottom: 12px;">
           <label>Title (English)</label>
-          <input type="text" id="expTitleEn" class="form-input" placeholder="e.g. Flower Decoration" required style="font-size: 14px; padding-left: 14px;">
+          <input type="text" id="expTitleEn" class="form-input" placeholder="e.g. Flower Decoration" required>
         </div>
 
         <div class="form-group" style="margin-bottom: 12px;">
           <label>ಶೀರ್ಷಿಕೆ (ಕನ್ನಡ)</label>
-          <input type="text" id="expTitleKn" class="form-input" placeholder="ಉದಾ: ಹೂವಿನ ಅಲಂಕಾರ" style="font-size: 14px; padding-left: 14px;">
+          <input type="text" id="expTitleKn" class="form-input" placeholder="ಉದಾ: ಹೂವಿನ ಅಲಂಕಾರ">
         </div>
 
         <div class="form-group" style="margin-bottom: 12px;">
           <label>Category / ವರ್ಗ</label>
-          <select id="expCategory" class="form-input" style="font-size: 14px; padding-left: 14px;">
+          <select id="expCategory" class="form-input">
             <option value="festival">Festival (ಹಬ್ಬ)</option>
             <option value="temple">Temple (ದೇವಾಲಯ)</option>
             <option value="other">Other (ಇತರ)</option>
@@ -778,7 +766,7 @@
 
         <div class="form-group" style="margin-bottom: 16px;">
           <label>Amount / ಮೊತ್ತ (₹)</label>
-          <input type="number" id="expAmount" class="form-input" placeholder="500" required style="font-size: 16px; padding-left: 14px;">
+          <input type="number" id="expAmount" class="form-input" placeholder="500" required>
         </div>
 
         <button type="submit" class="btn-primary-wide">Save Expense / ಉಳಿಸಿ</button>
@@ -786,9 +774,6 @@
     </div>
   </div>
 
-  <!-- ============================================================
-       MODAL 2: ADMIN ADD MEMBER
-       ============================================================ -->
   <div class="modal-overlay" id="modalAddMember">
     <div class="modal-box">
       <div class="modal-header">
@@ -799,22 +784,22 @@
       <form onsubmit="handleAddMemberSubmit(event)">
         <div class="form-group" style="margin-bottom: 10px;">
           <label>Name (English)</label>
-          <input type="text" id="memNameEn" class="form-input" placeholder="e.g. Basappa" required style="font-size: 14px; padding-left: 14px;">
+          <input type="text" id="memNameEn" class="form-input" placeholder="e.g. Basappa" required>
         </div>
 
         <div class="form-group" style="margin-bottom: 10px;">
           <label>ಹೆಸರು (ಕನ್ನಡ)</label>
-          <input type="text" id="memNameKn" class="form-input" placeholder="ಉದಾ: ಬಸಪ್ಪ" style="font-size: 14px; padding-left: 14px;">
+          <input type="text" id="memNameKn" class="form-input" placeholder="ಉದಾ: ಬಸಪ್ಪ">
         </div>
 
         <div class="form-group" style="margin-bottom: 10px;">
           <label>Phone / ಮೊಬೈಲ್</label>
-          <input type="tel" id="memPhone" class="form-input" placeholder="9876543225" required style="font-size: 14px; padding-left: 14px;">
+          <input type="tel" id="memPhone" class="form-input" placeholder="9876543225" required>
         </div>
 
         <div class="form-group" style="margin-bottom: 14px;">
           <label>Role / ಪಾತ್ರ</label>
-          <select id="memRole" class="form-input" style="font-size: 14px; padding-left: 14px;">
+          <select id="memRole" class="form-input">
             <option value="Member">Member (ಸಾಧಾರಣ ಸದಸ್ಯ)</option>
             <option value="Admin">Admin (ಅಡ್ಮಿನ್ & ಸದಸ್ಯ)</option>
           </select>
@@ -825,9 +810,6 @@
     </div>
   </div>
 
-  <!-- ============================================================
-       MODAL 3: ADMIN CHANGE PASSWORD
-       ============================================================ -->
   <div class="modal-overlay" id="modalChangePassword">
     <div class="modal-box">
       <div class="modal-header">
@@ -838,13 +820,13 @@
       <form onsubmit="handleChangePasswordSubmit(event)">
         <div class="form-group" style="margin-bottom: 12px;">
           <label>Select Member / ಸದಸ್ಯರನ್ನು ಆಯ್ಕೆಮಾಡಿ</label>
-          <select id="pwdMemberSelect" class="form-input" style="font-size: 14px; padding-left: 14px;">
+          <select id="pwdMemberSelect" class="form-input">
           </select>
         </div>
 
         <div class="form-group" style="margin-bottom: 16px;">
           <label>New Password / ಹೊಸ ಪಾಸ್‌ವರ್ಡ್</label>
-          <input type="password" id="newPasswordInput" class="form-input" placeholder="••••••••" required style="font-size: 16px; padding-left: 14px;">
+          <input type="password" id="newPasswordInput" class="form-input" placeholder="••••••••" required>
         </div>
 
         <button type="submit" class="btn-primary-wide">Update Password / ನವೀಕರಿಸಿ</button>
@@ -852,9 +834,7 @@
     </div>
   </div>
 
-  <!-- ============================================================
-       MODAL 4: ADMIN CONDUCT CHIT DRAW
-       ============================================================ -->
+  <!-- MONTH & YEAR SELECTOR DROPDOWN ON PAYOUT DRAW MODAL -->
   <div class="modal-overlay" id="modalConductDraw">
     <div class="modal-box">
       <div class="modal-header">
@@ -864,19 +844,30 @@
 
       <form onsubmit="handleConductDrawSubmit(event)">
         <div class="form-group" style="margin-bottom: 12px;">
-          <label>Month & Year / ತಿಂಗಳು</label>
-          <input type="text" id="drawMonthYear" class="form-input" value="Oct 2026" required style="font-size: 14px; padding-left: 14px;">
+          <label>Month & Year / ತಿಂಗಳು ಮತ್ತು ವರ್ಷ</label>
+          <select id="drawMonthYear" class="form-input">
+            <option value="Oct 2026">Oct 2026</option>
+            <option value="Nov 2026">Nov 2026</option>
+            <option value="Dec 2026">Dec 2026</option>
+            <option value="Jan 2027">Jan 2027</option>
+            <option value="Feb 2027">Feb 2027</option>
+            <option value="Mar 2027">Mar 2027</option>
+            <option value="Sep 2026">Sep 2026</option>
+            <option value="Aug 2026">Aug 2026</option>
+            <option value="Jul 2026">Jul 2026</option>
+            <option value="Jun 2026">Jun 2026</option>
+          </select>
         </div>
 
         <div class="form-group" style="margin-bottom: 12px;">
           <label>Winner Member / ಗೆದ್ದ ಸದಸ್ಯರು</label>
-          <select id="drawMemberSelect" class="form-input" style="font-size: 14px; padding-left: 14px;">
+          <select id="drawMemberSelect" class="form-input">
           </select>
         </div>
 
         <div class="form-group" style="margin-bottom: 16px;">
           <label>Payout Amount Won (₹)</label>
-          <input type="number" id="drawAmountWon" class="form-input" value="2400" required style="font-size: 16px; padding-left: 14px;">
+          <input type="number" id="drawAmountWon" class="form-input" value="2400" required>
         </div>
 
         <button type="submit" class="btn-primary-wide" style="background: linear-gradient(135deg, #D97706, #B45309);">Announce Winner / ವಿಜೇತ ಘೋಷಿಸಿ</button>
@@ -884,9 +875,7 @@
     </div>
   </div>
 
-  <!-- ============================================================
-       MODAL 5: USER PROFILE VIEW
-       ============================================================ -->
+  <!-- USER PROFILE MODAL -->
   <div class="modal-overlay" id="modalProfile">
     <div class="modal-box" style="text-align: center;">
       <div class="modal-header">
@@ -920,8 +909,8 @@
       </div>
 
       <div style="display: flex; gap: 10px; margin-top: 10px;">
-        <button class="btn-control" style="flex: 1; background: #0EA5E9; justify-content: center; padding: 10px;" onclick="closeModal('modalProfile'); openModal('modalChangePassword');">🔑 Password</button>
-        <button class="btn-control" style="flex: 1; background: #DC2626; justify-content: center; padding: 10px;" onclick="closeModal('modalProfile'); handleLogout();">🚪 Logout</button>
+        <button class="btn-control" style="flex: 1; background: #0EA5E9; justify-content: center; padding: 12px; border-radius: 20px;" onclick="closeModal('modalProfile'); openModal('modalChangePassword');">🔑 Password</button>
+        <button class="btn-control" style="flex: 1; background: #DC2626; justify-content: center; padding: 12px; border-radius: 20px;" onclick="closeModal('modalProfile'); handleLogout();">🚪 Logout</button>
       </div>
     </div>
   </div>
