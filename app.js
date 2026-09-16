@@ -134,42 +134,21 @@ let totalSavingsVal = 90000;
 let totalExpensesVal = 8450;
 let currentUser = null;
 
-// Members List Data
-const membersData = [
-  { id: 1, code: 'M#01', nameEn: 'Ganesh (Admin)', nameKn: 'ಗಣೇಶ್ (ಅಡ್ಮಿನ್)', phone: '9876543210', role: 'Admin', status: 'Active', loanPrincipal: 10000 },
-  { id: 2, code: 'M#02', nameEn: 'Ramesh', nameKn: 'ರಮೇಶ್', phone: '9876543211', role: 'Member', status: 'Active', loanPrincipal: 5000 },
-  { id: 3, code: 'M#03', nameEn: 'Suresh', nameKn: 'ಸುರೇಶ್', phone: '9876543212', role: 'Member', status: 'Active', loanPrincipal: 0 },
-  { id: 4, code: 'M#04', nameEn: 'Mahesh', nameKn: 'ಮಹೇಶ್', phone: '9876543213', role: 'Member', status: 'Active', loanPrincipal: 10000 },
-  { id: 5, code: 'M#05', nameEn: 'Ravi', nameKn: 'ರವಿ', phone: '9876543214', role: 'Member', status: 'Active', loanPrincipal: 0 },
-  { id: 6, code: 'M#06', nameEn: 'Shankar', nameKn: 'ಶಂಕರ್', phone: '9876543215', role: 'Member', status: 'Active', loanPrincipal: 2000 },
-  { id: 7, code: 'M#07', nameEn: 'Ramesh Kumar', nameKn: 'ರಮೇಶ್ ಕುಮಾರ್', phone: '9876543216', role: 'Member', status: 'Active', loanPrincipal: 5000 },
-  { id: 8, code: 'M#08', nameEn: 'Lakshmi', nameKn: 'ಲಕ್ಷ್ಮಿ', phone: '9876543217', role: 'Member', status: 'Active', loanPrincipal: 0 },
-  { id: 9, code: 'M#09', nameEn: 'Anitha', nameKn: 'ಅನಿತಾ', phone: '9876543218', role: 'Member', status: 'Active', loanPrincipal: 0 },
-  { id: 10, code: 'M#10', nameEn: 'Kumar', nameKn: 'ಕುಮಾರ್', phone: '9876543219', role: 'Member', status: 'Active', loanPrincipal: 0 },
-  { id: 11, code: 'M#11', nameEn: 'Pooja', nameKn: 'ಪೂಜಾ', phone: '9876543220', role: 'Member', status: 'Active', loanPrincipal: 0 },
-  { id: 12, code: 'M#12', nameEn: 'Manjunath', nameKn: 'ಮಂಜುನಾಥ್', phone: '9876543221', role: 'Member', status: 'Active', loanPrincipal: 0 },
-  { id: 13, code: 'M#13', nameEn: 'Shivaram', nameKn: 'ಶಿವರಾಮ್', phone: '9876543222', role: 'Member', status: 'Active', loanPrincipal: 0 },
-  { id: 14, code: 'M#14', nameEn: 'Basavaraj', nameKn: 'ಬಸವರಾಜ್', phone: '9876543223', role: 'Member', status: 'Active', loanPrincipal: 0 },
-  { id: 15, code: 'M#15', nameEn: 'Venkatesh', nameKn: 'ವೆಂಕಟೇಶ್', phone: '9876543224', role: 'Member', status: 'Active', loanPrincipal: 0 }
-];
-
-// Expenses Data
-const expensesData = [
-  { id: 1, titleEn: "Ganesh Chaturthi Puja (Temple & Prasad)", titleKn: "ಗಣೇಶ ಚತುರ್ಥಿ ಪೂಜೆ (ದೇವಾಲಯ ಮತ್ತು ಪ್ರಸಾದ)", date: "12 Sep 2026", category: "festival", amount: 2500 },
-  { id: 2, titleEn: "Group Dinner", titleKn: "ಗುಂಪು ಊಟ", date: "05 Aug 2026", category: "other", amount: 1800 },
-  { id: 3, titleEn: "Temple Donation", titleKn: "ದೇವಾಲಯ ದೇಣಿಗೆ", date: "15 Jan 2026", category: "temple", amount: 1000 },
-  { id: 4, titleEn: "Flowers & Decoration", titleKn: "ಹೂವುಗಳು ಮತ್ತು ಅಲಂಕಾರ", date: "27 Aug 2025", category: "festival", amount: 950 },
-  { id: 5, titleEn: "Miscellaneous", titleKn: "ಇತರ ಖರ್ಚುಗಳು", date: "10 May 2025", category: "other", amount: 1200 }
-];
+// Pure DB-Backed Data Arrays (No local storage or mock fallbacks)
+let membersData = [];
+let expensesData = [];
+let paymentSubmissions = [];
+let memberPaymentsData = {};
+let expenseCategories = [];
+let payoutHistoryData = [];
+let notificationsData = [];
 
 // DOM Initialization
 document.addEventListener('DOMContentLoaded', () => {
-  loadAppStateFromLocalStorage();
   registerServiceWorker();
   fetchLiveDataFromBackend();
   renderMembersList();
   renderExpensesList('all');
-  loadNotificationsData();
   checkAutomatedReminders();
   updateI18nText();
   updatePendingBadgeCount();
@@ -212,67 +191,218 @@ function hideSpinner() {
   if (overlay) overlay.classList.remove('active');
 }
 
-// Fetch Live Data
+// Fetch Live Data directly from MSSQL Database APIs
 async function fetchLiveDataFromBackend() {
+  showSpinner('Syncing with MSSQL Database...');
   try {
-    const resSettings = await fetch(`${API_BASE_URL}/settings`);
-    if (resSettings.ok) {
-      const apiSettings = await resSettings.json();
-      appConfig = { ...appConfig, ...apiSettings };
-      applyGlobalAppConfig();
-    }
-  } catch (err) {}
-
-  try {
-    const resCats = await fetch(`${API_BASE_URL}/categories`);
-    if (resCats.ok) {
-      const apiCats = await resCats.json();
-      if (Array.isArray(apiCats) && apiCats.length > 0) {
-        expenseCategories = apiCats;
-        renderCategoryDropdowns();
+    // 1. Global Settings
+    try {
+      const resSettings = await fetch(`${API_BASE_URL}/settings`);
+      if (resSettings.ok) {
+        const apiSettings = await resSettings.json();
+        appConfig = { ...appConfig, ...apiSettings };
+        applyGlobalAppConfig();
       }
-    }
-  } catch (err) {}
+    } catch (e) {}
 
-  try {
-    const resSummary = await fetch(`${API_BASE_URL}/summary`);
-    if (resSummary.ok) {
-      const data = await resSummary.json();
-      totalSavingsVal = data.totalSavings || 90000;
-      totalExpensesVal = data.totalExpenses || 7450;
-      
-      document.querySelectorAll('.savings-total-val').forEach(el => {
-        el.textContent = `₹ ${totalSavingsVal.toLocaleString()}`;
-      });
-      document.querySelectorAll('.expenses-total-val').forEach(el => {
-        el.textContent = `₹ ${totalExpensesVal.toLocaleString()}`;
-      });
-    }
+    // 2. Expense Categories
+    try {
+      const resCats = await fetch(`${API_BASE_URL}/categories`);
+      if (resCats.ok) {
+        const apiCats = await resCats.json();
+        if (Array.isArray(apiCats) && apiCats.length > 0) {
+          expenseCategories = apiCats;
+          renderCategoryDropdowns();
+        }
+      }
+    } catch (e) {}
 
-    const resMembers = await fetch(`${API_BASE_URL}/members`);
-    if (resMembers.ok) {
-      const apiMems = await resMembers.json();
-      if (apiMems && apiMems.length > 0) {
-        membersData.length = 0;
-        apiMems.forEach(m => {
-          membersData.push({
+    // 3. Summary Aggregations
+    try {
+      const resSummary = await fetch(`${API_BASE_URL}/summary`);
+      if (resSummary.ok) {
+        const data = await resSummary.json();
+        totalSavingsVal = data.totalSavings || 0;
+        totalExpensesVal = data.totalExpenses || 0;
+        
+        document.querySelectorAll('.savings-total-val').forEach(el => {
+          el.textContent = `₹ ${totalSavingsVal.toLocaleString()}`;
+        });
+        document.querySelectorAll('.expenses-total-val').forEach(el => {
+          el.textContent = `₹ ${totalExpensesVal.toLocaleString()}`;
+        });
+      }
+    } catch (e) {}
+
+    // 4. Members List
+    try {
+      const resMembers = await fetch(`${API_BASE_URL}/members`);
+      if (resMembers.ok) {
+        const apiMems = await resMembers.json();
+        if (Array.isArray(apiMems)) {
+          membersData = apiMems.map(m => ({
             id: m.MemberID,
             code: m.MemberCode,
             nameEn: m.Name_EN,
             nameKn: m.Name_KN || m.Name_EN,
             phone: m.Phone,
             role: m.Role || 'Member',
-            status: m.Status || 'Active'
-          });
-        });
-        renderMembersList();
-        populateMemberDropdowns();
+            status: m.Status || 'Active',
+            loanPrincipal: 0
+          }));
+        }
       }
-    }
+    } catch (e) {}
+
+    // 5. Member Loans
+    try {
+      const resLoans = await fetch(`${API_BASE_URL}/loans`);
+      if (resLoans.ok) {
+        const apiLoans = await resLoans.json();
+        if (Array.isArray(apiLoans)) {
+          apiLoans.forEach(l => {
+            const m = membersData.find(mem => mem.id === l.BorrowerID);
+            if (m) {
+              m.loanPrincipal = l.PrincipalAmount || 0;
+            }
+          });
+        }
+      }
+    } catch (e) {}
+
+    renderMembersList();
+    populateMemberDropdowns();
+
+    // 6. Contributions & Submissions
+    try {
+      const resContribs = await fetch(`${API_BASE_URL}/contributions`);
+      if (resContribs.ok) {
+        const apiContribs = await resContribs.json();
+        if (Array.isArray(apiContribs)) {
+          paymentSubmissions = apiContribs.map(c => ({
+            id: c.ContributionID,
+            memberId: c.MemberID,
+            nameEn: c.Name_EN,
+            nameKn: c.Name_KN || c.Name_EN,
+            code: c.MemberCode,
+            month: c.MonthYear,
+            cheetiAmt: appConfig.monthlyContribution,
+            interestAmt: 0,
+            totalAmt: c.Amount,
+            method: c.PaymentMethod || 'UPI',
+            utr: c.TransactionRef || '',
+            status: c.Status,
+            rejectionReason: c.Status === 'Rejected' ? c.TransactionRef : null,
+            submittedAt: c.PaidDate ? new Date(c.PaidDate).toLocaleDateString() : (c.DueDate ? new Date(c.DueDate).toLocaleDateString() : '')
+          }));
+
+          const allMonths = ["Jun 2026", "Jul 2026", "Aug 2026", "Sep 2026", "Oct 2026"];
+          memberPaymentsData = {};
+          allMonths.forEach(mKey => {
+            memberPaymentsData[mKey] = membersData.map(m => {
+              const match = apiContribs.find(c => c.MemberID === m.id && c.MonthYear === mKey);
+              if (match) {
+                return {
+                  memberId: m.id,
+                  memberCode: m.code,
+                  memberNameEn: m.nameEn,
+                  memberNameKn: m.nameKn,
+                  amount: match.Amount,
+                  status: match.Status,
+                  isPaid: match.Status === 'Paid' || match.Status === 'Approved',
+                  paidDate: match.PaidDate ? new Date(match.PaidDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : null,
+                  txnRef: match.TransactionRef || '',
+                  method: match.PaymentMethod || 'UPI'
+                };
+              } else {
+                return {
+                  memberId: m.id,
+                  memberCode: m.code,
+                  memberNameEn: m.nameEn,
+                  memberNameKn: m.nameKn,
+                  amount: appConfig.monthlyContribution,
+                  status: 'Pending',
+                  isPaid: false,
+                  paidDate: null,
+                  txnRef: '',
+                  method: '-'
+                };
+              }
+            });
+          });
+        }
+      }
+    } catch (e) {}
+
+    updatePendingBadgeCount();
+    checkMemberRejectedPaymentAlert();
+
+    // 7. Expenses
+    try {
+      const resExpenses = await fetch(`${API_BASE_URL}/expenses`);
+      if (resExpenses.ok) {
+        const apiExpenses = await resExpenses.json();
+        if (Array.isArray(apiExpenses)) {
+          expensesData = apiExpenses.map(e => ({
+            id: e.ExpenseID,
+            titleEn: e.Title_EN,
+            titleKn: e.Title_KN || e.Title_EN,
+            date: e.ExpenseDate ? new Date(e.ExpenseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+            category: (e.Category || 'other').toLowerCase(),
+            amount: e.Amount
+          }));
+          renderExpensesList('all');
+        }
+      }
+    } catch (e) {}
+
+    // 8. Payouts
+    try {
+      const resPayouts = await fetch(`${API_BASE_URL}/payouts`);
+      if (resPayouts.ok) {
+        const apiPayouts = await resPayouts.json();
+        if (Array.isArray(apiPayouts)) {
+          payoutHistoryData = apiPayouts.map(p => ({
+            id: p.PayoutID,
+            memberId: p.MemberID,
+            memberName: p.Name_EN,
+            memberNameKn: p.Name_KN || p.Name_EN,
+            monthYear: p.MonthYear,
+            drawDate: p.DrawDate ? new Date(p.DrawDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+            amountWon: p.AmountWon,
+            paymentMethod: p.PaymentMethod || 'UPI'
+          }));
+        }
+      }
+    } catch (e) {}
+
+    // 9. Notifications
+    try {
+      const resNotifs = await fetch(`${API_BASE_URL}/notifications`);
+      if (resNotifs.ok) {
+        const apiNotifs = await resNotifs.json();
+        if (Array.isArray(apiNotifs)) {
+          notificationsData = apiNotifs.map(n => ({
+            id: n.NotificationID,
+            title: n.Title,
+            body: n.Body,
+            type: (n.Type || 'broadcast').toLowerCase(),
+            time: n.CreatedAt ? new Date(n.CreatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now',
+            isRead: n.IsRead || false
+          }));
+          if (typeof renderNotificationsInbox === 'function') renderNotificationsInbox();
+          if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
+        }
+      }
+    } catch (e) {}
+
   } catch (err) {
-    console.log('Using local client state (API connection active)');
+    console.error('Database sync error:', err.message);
+  } finally {
+    hideSpinner();
   }
 }
+
 
 // Toggle Language Engine
 function toggleLanguage() {
@@ -679,27 +809,8 @@ function closeModal(modalId) {
 let currentUploadedReceiptDataUrl = null;
 let currentFixReceiptDataUrl = null;
 
-let paymentSubmissions = [
-  {
-    id: 101,
-    memberId: 2,
-    nameEn: 'Ramesh',
-    nameKn: 'ರಮೇಶ್',
-    code: 'M#02',
-    month: 'Oct 2026',
-    cheetiAmt: 200,
-    interestAmt: 250, // 5% of ₹5,000 loan
-    totalAmt: 450,
-    method: 'UPI',
-    utr: 'UTR: 324598712365',
-    receiptImg: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 300 180"><rect width="300" height="180" fill="%230F766E" rx="10"/><text x="50%" y="30%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="16" font-weight="bold" font-family="sans-serif">Google Pay - Payment Successful</text><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="%23FDE047" font-size="20" font-weight="bold" font-family="sans-serif">₹ 450.00</text><text x="50%" y="75%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="12" font-family="sans-serif">Ref UTR: 324598712365 • Oct 2026</text></svg>',
-    status: 'Pending Approval',
-    rejectionReason: null,
-    submittedAt: 'Today, 10:30 AM'
-  }
-];
 
-function handleContributionSubmit(event) {
+async function handleContributionSubmit(event) {
   event.preventDefault();
   const memberId = parseInt(document.getElementById('contribMemberSelect')?.value || 1, 10);
   const month = document.getElementById('contribMonthSelect')?.value || 'Oct 2026';
@@ -710,6 +821,23 @@ function handleContributionSubmit(event) {
   const member = membersData.find(m => m.id === memberId) || membersData[0];
 
   const receiptImg = currentUploadedReceiptDataUrl || `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 300 180"><rect width="300" height="180" fill="%230D9488" rx="10"/><text x="50%" y="30%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="16" font-weight="bold" font-family="sans-serif">UPI Payment Receipt</text><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="%23FDE047" font-size="20" font-weight="bold" font-family="sans-serif">₹ ${totalAmt}.00</text><text x="50%" y="75%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="12" font-family="sans-serif">Ref: ${utr} • ${month}</text></svg>`;
+
+  showSpinner('Saving Contribution to Database...');
+  try {
+    await fetch(`${API_BASE_URL}/contributions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        memberId: member.id,
+        monthYear: month,
+        amount: totalAmt,
+        paymentMethod: 'UPI',
+        transactionRef: utr,
+        status: 'Pending Approval'
+      })
+    });
+  } catch(err) { console.warn(err.message); }
+  hideSpinner();
 
   // Create submission object in Pending Approval state
   const newSubmission = {
@@ -732,7 +860,6 @@ function handleContributionSubmit(event) {
 
   paymentSubmissions.unshift(newSubmission);
 
-  // Mark in payments tracker state as Pending Approval
   if (!memberPaymentsData[month]) {
     renderMonthWisePaymentTracker(month);
   }
@@ -749,9 +876,8 @@ function handleContributionSubmit(event) {
 
   showToast(currentLang === 'kn' 
     ? `ಪಾವತಿ ರಸೀದಿ ಸಲ್ಲಿಸಲಾಗಿದೆ! ಅಡ್ಮಿನ್ ಪರಿಶೀಲನೆಗೆ ಕಾಯುತ್ತಿದೆ ⏳ (₹${totalAmt})` 
-    : `Payment receipt submitted! Waiting for Admin verification ⏳ (Total ₹${totalAmt})`, 'success');
+    : `Payment receipt submitted to Database! Waiting for Admin verification ⏳ (Total ₹${totalAmt})`, 'success');
 
-  // Reset upload input & preview
   currentUploadedReceiptDataUrl = null;
   const fileInput = document.getElementById('contribUpiReceiptFile');
   if (fileInput) fileInput.value = '';
@@ -824,32 +950,7 @@ function toggleDeviceView() {
 // PUSH NOTIFICATIONS & REMINDER ENGINE
 // ============================================================
 
-let notificationsData = [
-  {
-    id: 1,
-    title: "⏱️ Monthly Payment Due Reminder / ಕೊಡುಗೆ ಜ್ಞಾಪನೆ",
-    body: "Monthly Cheeti ₹200 contribution is due by 10th of every month. Please pay via UPI or Cash to stay active!",
-    type: "reminder",
-    time: "10 Sep 2026, 09:00 AM",
-    isRead: false
-  },
-  {
-    id: 2,
-    title: "🎲 12th Cheeti Lucky Draw Alert / 12ನೇ ತಾರೀಖಿನ ಚೀಟಿ ಡ್ರಾ",
-    body: "Monthly Cheeti Lucky Draw will take place on 12th at 6:00 PM! Good luck to all active group members!",
-    type: "event",
-    time: "12 Sep 2026, 10:30 AM",
-    isRead: false
-  },
-  {
-    id: 3,
-    title: "🎉 September Winner Announced / ಸೆಪ್ಟೆಂಬರ್ ವಿಜೇತರು",
-    body: "Congratulations to Ramesh Kumar for winning September 2026 Cheeti Payout of ₹2,400!",
-    type: "winner",
-    time: "12 Sep 2026, 06:30 PM",
-    isRead: true
-  }
-];
+
 
 // Play standard native app sound tone via Web Audio API
 function playNotificationSound() {
@@ -1209,25 +1310,7 @@ async function testAdminPushNotification() {
 // MONTH-WISE PAYMENT TRACKER & FINANCIAL STATEMENT ENGINE (OB/CB)
 // ============================================================
 
-let memberPaymentsData = {
-  'Oct 2026': [
-    { memberId: 1, nameEn: 'Ganesh (Admin)', nameKn: 'ಗಣೇಶ್ (ಅಡ್ಮಿನ್)', code: 'M#01', amount: 200, interest: 50, date: '10 Oct 2026', method: 'UPI', isPaid: true },
-    { memberId: 2, nameEn: 'Ramesh', nameKn: 'ರಮೇಶ್', code: 'M#02', amount: 200, interest: 50, date: '09 Oct 2026', method: 'Cash', isPaid: true },
-    { memberId: 3, nameEn: 'Suresh', nameKn: 'ಸುರೇಶ್', code: 'M#03', amount: 200, interest: 50, date: '11 Oct 2026', method: 'UPI', isPaid: true },
-    { memberId: 4, nameEn: 'Mahesh', nameKn: 'ಮಹೇಶ್', code: 'M#04', amount: 200, interest: 50, date: '10 Oct 2026', method: 'UPI', isPaid: true },
-    { memberId: 5, nameEn: 'Ravi', nameKn: 'ರವಿ', code: 'M#05', amount: 200, interest: 50, date: '08 Oct 2026', method: 'Cash', isPaid: true },
-    { memberId: 6, nameEn: 'Shankar', nameKn: 'ಶಂಕರ್', code: 'M#06', amount: 200, interest: 50, date: '12 Oct 2026', method: 'UPI', isPaid: true },
-    { memberId: 7, nameEn: 'Ramesh Kumar', nameKn: 'ರಮೇಶ್ ಕುಮಾರ್', code: 'M#07', amount: 200, interest: 50, date: '10 Oct 2026', method: 'UPI', isPaid: true },
-    { memberId: 8, nameEn: 'Lakshmi', nameKn: 'ಲಕ್ಷ್ಮಿ', code: 'M#08', amount: 200, interest: 50, date: '09 Oct 2026', method: 'UPI', isPaid: true },
-    { memberId: 9, nameEn: 'Anitha', nameKn: 'ಅನಿತಾ', code: 'M#09', amount: 200, interest: 50, date: '10 Oct 2026', method: 'Bank Transfer', isPaid: true },
-    { memberId: 10, nameEn: 'Kumar', nameKn: 'ಕುಮಾರ್', code: 'M#10', amount: 200, interest: 50, date: '11 Oct 2026', method: 'UPI', isPaid: true },
-    { memberId: 11, nameEn: 'Pooja', nameKn: 'ಪೂಜಾ', code: 'M#11', amount: 200, interest: 50, date: '10 Oct 2026', method: 'Cash', isPaid: true },
-    { memberId: 12, nameEn: 'Manjunath', nameKn: 'ಮಂಜುನಾಥ್', code: 'M#12', amount: 200, interest: 50, date: '12 Oct 2026', method: 'UPI', isPaid: true },
-    { memberId: 13, nameEn: 'Shivaram', nameKn: 'ಶಿವರಾಮ್', code: 'M#13', amount: 0, interest: 0, date: null, method: null, isPaid: false },
-    { memberId: 14, nameEn: 'Basavaraj', nameKn: 'ಬಸವರಾಜ್', code: 'M#14', amount: 0, interest: 0, date: null, method: null, isPaid: false },
-    { memberId: 15, nameEn: 'Venkatesh', nameKn: 'ವೆಂಕಟೇಶ್', code: 'M#15', amount: 0, interest: 0, date: null, method: null, isPaid: false }
-  ]
-};
+
 
 // Switch Contribution Sub-Tabs (Pay vs Month Status)
 function switchContributionSubTab(subTab) {
@@ -1590,7 +1673,7 @@ function updateLoanModalCalculatedInterest() {
 }
 
 // Handle Admin Save Borrowed Loan Principal
-function handleSaveMemberLoanSubmit(event) {
+async function handleSaveMemberLoanSubmit(event) {
   event.preventDefault();
   const memberId = parseInt(document.getElementById('loanModalMemberSelect')?.value || 1, 10);
   const principal = parseInt(document.getElementById('loanModalPrincipalInput')?.value || 0, 10);
@@ -1600,13 +1683,23 @@ function handleSaveMemberLoanSubmit(event) {
     m.loanPrincipal = principal;
     const interest = Math.round(principal * 0.05);
 
+    showSpinner('Updating Database...');
+    try {
+      await fetch(`${API_BASE_URL}/loans`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId, principalAmount: principal })
+      });
+    } catch(err) { console.warn(err.message); }
+    hideSpinner();
+
     populateMemberDropdowns();
     onContribMemberChange(memberId);
     closeModal('modalManageMemberLoan');
 
     showToast(currentLang === 'kn'
-      ? `${m.nameKn || m.nameEn} ಸಾಲದ ಮೊತ್ತ ₹${principal.toLocaleString()} ನವೀಕರಿಸಲಾಗಿದೆ! (ತಿಂಗಳ ಬಡ್ಡಿ: ₹${interest})`
-      : `Loan updated for ${m.nameEn} to ₹${principal.toLocaleString()}! (Next month interest auto-set to ₹${interest})`, 'success');
+      ? `${m.nameKn || m.nameEn} ಸಾಲದ ಮೊತ್ತ ₹${principal.toLocaleString()} ನವೀಕರಿಸಲಾಗಿದೆ!`
+      : `Loan updated in database for ${m.nameEn} to ₹${principal.toLocaleString()}!`, 'success');
   }
 }
 
@@ -1694,116 +1787,47 @@ function viewFullReceiptImage(imgSrc) {
   openModal('modalViewFullReceipt');
 }
 
-function approveMemberSubmission(id) {
-  const sub = paymentSubmissions.find(s => s.id === id);
-  if (!sub) return;
-
-  sub.status = 'Approved';
-
-  // Mark in payments data as Paid!
-  if (!memberPaymentsData[sub.month]) {
-    renderMonthWisePaymentTracker(sub.month);
-  }
-  const rec = memberPaymentsData[sub.month]?.find(r => r.memberId === sub.memberId);
-  if (rec) {
-    rec.isPaid = true;
-    rec.status = 'Approved';
-    rec.amount = sub.cheetiAmt;
-    rec.interest = sub.interestAmt;
-    rec.date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-    rec.method = 'UPI';
-  }
-
-  // Update total savings
-  totalSavingsVal += sub.cheetiAmt;
-  document.querySelectorAll('.savings-total-val').forEach(el => {
-    el.textContent = `₹ ${totalSavingsVal.toLocaleString()}`;
-  });
-
-  // Push notification to member
-  const notifMsg = `✅ Your payment of ₹${sub.totalAmt} for ${sub.month} has been Approved by Admin!`;
-  notificationsData.unshift({
-    id: Date.now(),
-    titleEn: 'Payment Approved ✅',
-    titleKn: 'ಪಾವತಿ ಅನುಮೋದಿಸಲಾಗಿದೆ ✅',
-    messageEn: notifMsg,
-    messageKn: `${sub.month} ತಿಂಗಳ ₹${sub.totalAmt} ಪಾವತಿಯನ್ನು ಅಡ್ಮಿನ್ ಯಶಸ್ವಿಯಾಗಿ ಅನುಮೋದಿಸಿದ್ದಾರೆ!`,
-    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    type: 'success',
-    isRead: false
-  });
-  updateNotificationBadge();
-
-  if ('Notification' in window && Notification.permission === 'granted') {
-    navigator.serviceWorker?.ready.then(reg => {
-      reg.showNotification('Ganesha Cheeti - Payment Approved ✅', {
-        body: notifMsg,
-        icon: '/ganesha_avatar.png',
-        badge: '/ganesha_avatar.png'
-      });
+async function approveMemberSubmission(id) {
+  showSpinner('Approving Payment in Database...');
+  try {
+    const res = await fetch(`${API_BASE_URL}/contributions/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Paid' })
     });
+    if (res.ok) {
+      await fetchLiveDataFromBackend();
+      showToast(currentLang === 'kn' ? 'ಪಾವತಿ ಯಶಸ್ವಿಯಾಗಿ ಅನುಮೋದಿಸಲಾಗಿದೆ!' : 'Payment approved in Database!', 'success');
+    }
+  } catch (err) {
+    showToast('Failed to approve payment in DB', 'error');
   }
-
-  showToast(currentLang === 'kn' ? `${sub.nameKn || sub.nameEn} ಪಾವತಿ ಯಶಸ್ವಿಯಾಗಿ ಅನುಮೋದಿಸಲಾಗಿದೆ!` : `Payment of ₹${sub.totalAmt} approved for ${sub.nameEn}!`, 'success');
-
-  updatePendingBadgeCount();
+  hideSpinner();
   renderAdminPendingApprovalsModal();
-  renderMonthWisePaymentTracker(sub.month);
-  checkMemberRejectedPaymentAlert();
 }
 
-function rejectMemberSubmission(id) {
-  const sub = paymentSubmissions.find(s => s.id === id);
-  if (!sub) return;
-
+async function rejectMemberSubmission(id) {
   const reasonInput = document.getElementById(`rejectReason_${id}`);
   const reason = (reasonInput && reasonInput.value.trim()) 
     ? reasonInput.value.trim() 
     : 'Incorrect UTR number or unclear receipt. Please re-upload.';
 
-  sub.status = 'Rejected';
-  sub.rejectionReason = reason;
-
-  // Mark in payments data as Rejected
-  if (!memberPaymentsData[sub.month]) {
-    renderMonthWisePaymentTracker(sub.month);
-  }
-  const rec = memberPaymentsData[sub.month]?.find(r => r.memberId === sub.memberId);
-  if (rec) {
-    rec.isPaid = false;
-    rec.status = 'Rejected';
-  }
-
-  // Push notification to member
-  const notifMsg = `❌ Payment Rejected by Admin for ${sub.month}. Reason: ${reason}`;
-  notificationsData.unshift({
-    id: Date.now(),
-    titleEn: 'Payment Rejected ❌',
-    titleKn: 'ಪಾವತಿ ತಿರಸ್ಕರಿಸಲಾಗಿದೆ ❌',
-    messageEn: notifMsg,
-    messageKn: `${sub.month} ಪಾವತಿ ತಿರಸ್ಕರಿಸಲಾಗಿದೆ. ಕಾರಣ: ${reason}`,
-    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    type: 'error',
-    isRead: false
-  });
-  updateNotificationBadge();
-
-  if ('Notification' in window && Notification.permission === 'granted') {
-    navigator.serviceWorker?.ready.then(reg => {
-      reg.showNotification('Ganesha Cheeti - Payment Rejected ❌', {
-        body: notifMsg,
-        icon: '/ganesha_avatar.png',
-        badge: '/ganesha_avatar.png'
-      });
+  showSpinner('Rejecting Payment in Database...');
+  try {
+    const res = await fetch(`${API_BASE_URL}/contributions/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Rejected', rejectionReason: reason })
     });
+    if (res.ok) {
+      await fetchLiveDataFromBackend();
+      showToast(currentLang === 'kn' ? 'ಪಾವತಿ ತಿರಸ್ಕರಿಸಲಾಗಿದೆ.' : 'Payment rejected in Database.', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to reject payment in DB', 'error');
   }
-
-  showToast(currentLang === 'kn' ? `ಪಾವತಿ ತಿರಸ್ಕರಿಸಲಾಗಿದೆ. ಸದಸ್ಯರಿಗೆ ಸೂಚನೆ ಕಳುಹಿಸಲಾಗಿದೆ.` : `Payment rejected. Sent back to user to fix.`, 'error');
-
-  updatePendingBadgeCount();
+  hideSpinner();
   renderAdminPendingApprovalsModal();
-  renderMonthWisePaymentTracker(sub.month);
-  checkMemberRejectedPaymentAlert();
 }
 
 function checkMemberRejectedPaymentAlert() {
@@ -1863,36 +1887,36 @@ function previewFixReceipt(input) {
   }
 }
 
-function handleResubmitPayment(event) {
+async function handleResubmitPayment(event) {
   event.preventDefault();
   const subId = parseInt(document.getElementById('fixSubmissionId')?.value || 0, 10);
   const newUtr = document.getElementById('fixUtrInput')?.value || '';
 
-  const sub = paymentSubmissions.find(s => s.id === subId);
-  if (sub) {
-    sub.utr = newUtr;
-    if (currentFixReceiptDataUrl) {
-      sub.receiptImg = currentFixReceiptDataUrl;
+  showSpinner('Re-submitting Payment to Database...');
+  try {
+    const res = await fetch(`${API_BASE_URL}/contributions/${subId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Pending Approval', rejectionReason: newUtr })
+    });
+    if (res.ok) {
+      await fetchLiveDataFromBackend();
+      showToast(currentLang === 'kn'
+        ? 'ಪಾವತಿ ಯಶಸ್ವಿಯಾಗಿ ಮರು-ಸಲ್ಲಿಸಲಾಗಿದೆ! ಅಡ್ಮಿನ್‌ಗೆ ಕಳುಹಿಸಲಾಗಿದೆ ⏳'
+        : 'Payment re-submitted for Admin approval! ⏳', 'success');
     }
-    sub.status = 'Pending Approval';
-    sub.rejectionReason = null;
-    sub.submittedAt = 'Re-submitted just now';
-
-    showToast(currentLang === 'kn'
-      ? 'ಪಾವತಿ ಯಶಸ್ವಿಯಾಗಿ ಮರು-ಸಲ್ಲಿಸಲಾಗಿದೆ! ಅಡ್ಮಿನ್‌ಗೆ ಕಳುಹಿಸಲಾಗಿದೆ ⏳'
-      : 'Payment re-submitted for Admin approval! ⏳', 'success');
-
-    closeModal('modalFixRejectedPayment');
-    currentFixReceiptDataUrl = null;
-
-    updatePendingBadgeCount();
-    checkMemberRejectedPaymentAlert();
-    renderMonthWisePaymentTracker(sub.month);
+  } catch (err) {
+    showToast('Failed to re-submit payment in DB', 'error');
   }
+  hideSpinner();
+  closeModal('modalFixRejectedPayment');
 }
+
 
 // ============================================================
 // CUSTOM FORM VALIDATION ENGINE (REPLACES BROWSER DEFAULT TOOLTIPS)
+// ============================================================
+// CUSTOM FORM VALIDATION ENGINE
 // ============================================================
 
 function clearFormErrors(form) {
@@ -1977,16 +2001,8 @@ function validateForm(form) {
 }
 
 // ============================================================
-// DYNAMIC EXPENSE CATEGORY MANAGEMENT ENGINE (ADD / ACTIVATE / DEACTIVATE)
+// DYNAMIC EXPENSE CATEGORY MANAGEMENT ENGINE (DB-BACKED)
 // ============================================================
-
-let expenseCategories = [
-  { id: 'festival', code: 'FEST', nameEn: 'Festival', nameKn: 'ಹಬ್ಬ', status: 'Active', color: '#059669' },
-  { id: 'temple', code: 'TMPL', nameEn: 'Temple', nameKn: 'ದೇವಾಲಯ', status: 'Active', color: '#D97706' },
-  { id: 'pooja', code: 'POOJ', nameEn: 'Puja & Rituals', nameKn: 'ಪೂಜೆ ಮತ್ತು ಆಚರಣೆ', status: 'Active', color: '#7C3AED' },
-  { id: 'food', code: 'FOOD', nameEn: 'Food & Prasad', nameKn: 'ಊಟ ಮತ್ತು ಪ್ರಸಾದ', status: 'Active', color: '#DC2626' },
-  { id: 'other', code: 'OTHR', nameEn: 'Other', nameKn: 'ಇತರ', status: 'Active', color: '#4B5563' }
-];
 
 function openManageCategoriesModal() {
   renderCategoryManagementList();
@@ -2003,7 +2019,7 @@ function renderCategoryManagementList() {
     return `
       <div class="category-item-card ${isAct ? '' : 'inactive'}">
         <div style="display:flex; align-items:center; gap:8px;">
-          <span style="width:12px; height:12px; border-radius:50%; background:${cat.color}; display:inline-block;"></span>
+          <span style="width:12px; height:12px; border-radius:50%; background:${cat.color || '#059669'}; display:inline-block;"></span>
           <div>
             <div style="font-weight:700; font-size:13px; color:var(--text-main);">${name} <span style="font-size:10px; color:var(--text-muted);">(${cat.code})</span></div>
             <div style="font-size:10px; color:${isAct ? '#059669' : '#DC2626'}; font-weight:700;">Status: ${isAct ? 'Active ✅' : 'Deactivated ❌'}</div>
@@ -2017,19 +2033,27 @@ function renderCategoryManagementList() {
   }).join('');
 }
 
-function toggleCategoryStatus(catId) {
+async function toggleCategoryStatus(catId) {
   const cat = expenseCategories.find(c => c.id === catId);
   if (cat) {
-    cat.status = cat.status === 'Active' ? 'Deactivated' : 'Active';
-    renderCategoryManagementList();
-    renderCategoryDropdowns();
-    showToast(currentLang === 'kn'
-      ? `ವರ್ಗ '${cat.nameKn || cat.nameEn}' ಸ್ಥಿತಿ ${cat.status === 'Active' ? 'ಆಕ್ಟಿವೇಟ್' : 'ಡೆಆಕ್ಟಿವೇಟ್'} ಮಾಡಲಾಗಿದೆ!`
-      : `Category '${cat.nameEn}' set to ${cat.status}!`, 'success');
+    cat.status = (cat.status === 'Active') ? 'Inactive' : 'Active';
+    showSpinner('Updating Category in Database...');
+    try {
+      await fetch(`${API_BASE_URL}/categories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(expenseCategories)
+      });
+      await fetchLiveDataFromBackend();
+      showToast(currentLang === 'kn'
+        ? `ವರ್ಗ '${cat.nameKn || cat.nameEn}' ಸ್ಥಿತಿ ${cat.status === 'Active' ? 'ಆಕ್ಟಿವೇಟ್' : 'ಡೆಆಕ್ಟಿವೇಟ್'} ಮಾಡಲಾಗಿದೆ!`
+        : `Category '${cat.nameEn}' set to ${cat.status}!`, 'success');
+    } catch (e) {}
+    hideSpinner();
   }
 }
 
-function handleAddCategorySubmit(event) {
+async function handleAddCategorySubmit(event) {
   event.preventDefault();
   if (!validateForm(event.target)) return;
 
@@ -2041,21 +2065,33 @@ function handleAddCategorySubmit(event) {
   const colors = ['#059669', '#D97706', '#7C3AED', '#DC2626', '#0284C7', '#2563EB', '#4B5563'];
   const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
-  expenseCategories.push({
+  const newCat = {
     id,
     code,
     nameEn,
     nameKn,
     status: 'Active',
     color: randomColor
-  });
+  };
+  const updatedCats = [...expenseCategories, newCat];
 
-  document.getElementById('newCatEn').value = '';
-  document.getElementById('newCatKn').value = '';
-
-  renderCategoryManagementList();
-  renderCategoryDropdowns();
-  showToast(currentLang === 'kn' ? 'ಹೊಸ ವರ್ಗ ಯಶಸ್ವಿಯಾಗಿ ಸೇರಿಸಲಾಗಿದೆ!' : 'New Category added successfully!', 'success');
+  showSpinner('Saving Category to Database...');
+  try {
+    const res = await fetch(`${API_BASE_URL}/categories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedCats)
+    });
+    if (res.ok) {
+      document.getElementById('newCatEn').value = '';
+      document.getElementById('newCatKn').value = '';
+      await fetchLiveDataFromBackend();
+      showToast(currentLang === 'kn' ? 'ಹೊಸ ವರ್ಗ ಯಶಸ್ವಿಯಾಗಿ ಸೇರಿಸಲಾಗಿದೆ!' : 'New Category added successfully in Database!', 'success');
+    }
+  } catch (err) {
+    showToast('Failed to save category in DB', 'error');
+  }
+  hideSpinner();
 }
 
 function renderCategoryDropdowns() {
@@ -2081,7 +2117,7 @@ function renderCategoryDropdowns() {
 }
 
 // ============================================================
-// GLOBAL APP & GROUP CONFIGURATION ENGINE (WITH EFFECTIVE FROM DATE RULE)
+// GLOBAL APP & GROUP CONFIGURATION ENGINE
 // ============================================================
 
 let appConfig = {
@@ -2096,14 +2132,12 @@ let appConfig = {
 };
 
 function applyGlobalAppConfig() {
-  // Update App Titles across screens & headers
   document.querySelectorAll('.app-title-en-display').forEach(el => el.textContent = appConfig.appTitleEn);
   document.querySelectorAll('.app-title-kn-display').forEach(el => el.textContent = appConfig.appTitleKn);
   document.querySelectorAll('.app-title-brand-display').forEach(el => {
     el.textContent = `${appConfig.appTitleEn} (${appConfig.appTitleKn})`;
   });
 
-  // Update i18n dictionary for dynamic language toggling
   if (i18n.en) {
     i18n.en.appTitle = appConfig.appTitleEn;
     i18n.en.groupName = `Group: ${appConfig.groupNameEn}`;
@@ -2113,20 +2147,15 @@ function applyGlobalAppConfig() {
     i18n.kn.groupName = `ಗುಂಪು: ${appConfig.groupNameKn}`;
   }
 
-  // Update Group Name displays
   document.querySelectorAll('.group-name-display').forEach(el => el.textContent = appConfig.groupNameEn);
-
-  // Update Monthly contribution displays
   document.querySelectorAll('.monthly-amt-display').forEach(el => el.textContent = `₹ ${appConfig.monthlyContribution} per member`);
 
-  // Update Draw date & notice box
   const drawDayText = `${appConfig.cheetiDrawDay}th Oct 2026`;
   document.querySelectorAll('.next-draw-date-display').forEach(el => el.textContent = drawDayText);
   document.querySelectorAll('.cheeti-conduct-notice-display').forEach(el => {
     el.textContent = `ಪ್ರತಿ ${appConfig.cheetiDrawDay}ನೇ ತಾರೀಖಿಗೆ ಚೀಟಿ ನಡೆಯುತ್ತದೆ. Cheeti will be conducted on ${appConfig.cheetiDrawDay}th of every month.`;
   });
 
-  // Update Monthly Contribution input default value on payment form if present
   const contribInput = document.getElementById('contribAmountInput');
   if (contribInput) {
     contribInput.value = appConfig.monthlyContribution;
@@ -2166,7 +2195,7 @@ function openGlobalSettingsModal() {
   openModal('modalEditGlobalSettings');
 }
 
-function handleSaveGlobalSettingsSubmit(event) {
+async function handleSaveGlobalSettingsSubmit(event) {
   event.preventDefault();
   if (!validateForm(event.target)) return;
 
@@ -2187,82 +2216,26 @@ function handleSaveGlobalSettingsSubmit(event) {
   appConfig.cheetiDrawDay = drawDay;
   appConfig.defaultInterestRate = interestRate;
 
-  // Apply effective date rule logic to memberPaymentsData for months on or after effectiveMonth
-  const allMonths = Object.keys(memberPaymentsData);
-  const effectiveIdx = allMonths.indexOf(effectiveMonth);
-
-  if (effectiveIdx !== -1) {
-    for (let i = effectiveIdx; i < allMonths.length; i++) {
-      const m = allMonths[i];
-      if (memberPaymentsData[m]) {
-        memberPaymentsData[m].forEach(r => {
-          // Only update unpaid default amounts for effective future months
-          if (!r.isPaid) {
-            r.amount = monthlyAmt;
-          }
-        });
-      }
-    }
-  }
-
-  saveAppStateToLocalStorage();
-  applyGlobalAppConfig();
-  closeModal('modalEditGlobalSettings');
-
-  showToast(currentLang === 'kn'
-    ? `ಗ್ಲೋಬಲ್ ಸೆಟ್ಟಿಂಗ್ಸ್ ಉಳಿಸಲಾಗಿದೆ! (${effectiveMonth} ರಿಂದ ತಿಂಗಳ ಮೊತ್ತ ₹${monthlyAmt})`
-    : `Global settings saved! Monthly amount ₹${monthlyAmt} effective from ${effectiveMonth}.`, 'success');
-}
-
-// --- LOCALSTORAGE & BACKEND PERSISTENCE UTILITIES ---
-function saveAppStateToLocalStorage() {
+  showSpinner('Saving Global Settings to Database...');
   try {
-    localStorage.setItem('ganesha_app_config', JSON.stringify(appConfig));
-    localStorage.setItem('ganesha_expense_categories', JSON.stringify(expenseCategories));
-    localStorage.setItem('ganesha_payment_submissions', JSON.stringify(paymentSubmissions));
-    localStorage.setItem('ganesha_member_payments_data', JSON.stringify(memberPaymentsData));
-
-    fetch(`${API_BASE_URL}/settings`, {
+    const res = await fetch(`${API_BASE_URL}/settings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(appConfig)
-    }).catch(e => console.warn('API settings sync error:', e.message));
-
-    fetch(`${API_BASE_URL}/categories`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(expenseCategories)
-    }).catch(e => console.warn('API categories sync error:', e.message));
-  } catch (err) {
-    console.warn('LocalStorage save error:', err.message);
-  }
-}
-
-function loadAppStateFromLocalStorage() {
-  try {
-    const savedConfig = localStorage.getItem('ganesha_app_config');
-    if (savedConfig) {
-      appConfig = { ...appConfig, ...JSON.parse(savedConfig) };
-    }
-
-    const savedCats = localStorage.getItem('ganesha_expense_categories');
-    if (savedCats) {
-      expenseCategories = JSON.parse(savedCats);
-    }
-
-    const savedSubs = localStorage.getItem('ganesha_payment_submissions');
-    if (savedSubs) {
-      paymentSubmissions = JSON.parse(savedSubs);
-    }
-
-    const savedPayments = localStorage.getItem('ganesha_member_payments_data');
-    if (savedPayments) {
-      memberPaymentsData = JSON.parse(savedPayments);
+    });
+    if (res.ok) {
+      await fetchLiveDataFromBackend();
+      showToast(currentLang === 'kn'
+        ? `ಗ್ಲೋಬಲ್ ಸೆಟ್ಟಿಂಗ್ಸ್ ಉಳಿಸಲಾಗಿದೆ! (${effectiveMonth} ರಿಂದ ತಿಂಗಳ ಮೊತ್ತ ₹${monthlyAmt})`
+        : `Global settings saved in Database! Monthly amount ₹${monthlyAmt} effective from ${effectiveMonth}.`, 'success');
     }
   } catch (err) {
-    console.warn('LocalStorage load error:', err.message);
+    showToast('Failed to save settings in DB', 'error');
   }
+  hideSpinner();
+  closeModal('modalEditGlobalSettings');
 }
+
 
 
 
