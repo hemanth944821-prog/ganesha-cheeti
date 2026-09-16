@@ -300,78 +300,138 @@
 
 
         <!-- ============================================================
-             SCREEN 4: MAKE CONTRIBUTION SCREEN
+             SCREEN 4: MAKE CONTRIBUTION & MONTH-WISE TRACKER
              ============================================================ -->
         <div class="screen" id="screen-contribution">
           <div class="app-header">
             <div class="header-left">
               <button class="btn-back" onclick="navigateTo('dashboard')">←</button>
               <div class="header-title-box">
-                <h2 data-i18n="makeContribution">Make Contribution</h2>
-                <p>ತಿಂಗಳ ಕೊಡುಗೆ</p>
+                <h2 data-i18n="makeContribution">Payments & Contributions</h2>
+                <p>ತಿಂಗಳ ಕೊಡುಗೆ ಮತ್ತು ಪಾವತಿ ಸ್ಥಿತಿ</p>
               </div>
             </div>
             <button class="lang-toggle-btn" onclick="toggleLanguage()" style="padding: 4px 10px; font-size: 11px;">🌐 <span class="lang-btn-text">English</span></button>
           </div>
 
-          <form onsubmit="handleContributionSubmit(event)" class="form-card">
-            <div class="form-group">
-              <label data-i18n="amountPerMember">Amount per Member</label>
-              <div style="font-size: 22px; font-weight: 800; color: var(--text-main);">₹ 200</div>
+          <!-- Sub Tabs Switcher -->
+          <div class="filter-tabs" style="margin-bottom: 14px;">
+            <button class="chip-tab active" id="tabContribPay" onclick="switchContributionSubTab('pay')">💳 Submit Payment / ಪಾವತಿಸಿ</button>
+            <button class="chip-tab" id="tabContribStatus" onclick="switchContributionSubTab('status')">📊 Month Status / ತಿಂಗಳ ಸ್ಥಿತಿ</button>
+          </div>
+
+          <!-- SUB TAB 1: SUBMIT PAYMENT FORM -->
+          <div id="subTabContribPay">
+            <form onsubmit="handleContributionSubmit(event)" class="form-card">
+              <div class="form-group">
+                <label>Select Member / ಸದಸ್ಯರನ್ನು ಆಯ್ಕೆಮಾಡಿ</label>
+                <select id="contribMemberSelect" class="form-input" required style="font-weight: 700;">
+                  <!-- Filled dynamically -->
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Contribution Month / ಕೊಡುಗೆ ತಿಂಗಳು</label>
+                <select id="contribMonthSelect" class="form-input" required style="font-weight: 700;">
+                  <option value="Oct 2026" selected>Oct 2026 (ಅಕ್ಟೋಬರ್ 2026)</option>
+                  <option value="Sep 2026">Sep 2026 (ಸೆಪ್ಟೆಂಬರ್ 2026)</option>
+                  <option value="Aug 2026">Aug 2026 (ಆಗಸ್ಟ್ 2026)</option>
+                  <option value="Jul 2026">Jul 2026 (ಜುಲೈ 2026)</option>
+                  <option value="Jun 2026">Jun 2026 (ಜೂನ್ 2026)</option>
+                </select>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>Monthly Cheeti (₹)</label>
+                  <input type="number" id="contribAmountInput" class="form-input" value="200" min="50" step="50" required oninput="updateTotalPaymentCalc()">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>Interest Amount (₹)</label>
+                  <input type="number" id="contribInterestInput" class="form-input" value="50" min="0" step="10" required oninput="updateTotalPaymentCalc()">
+                </div>
+              </div>
+
+              <!-- DYNAMIC TOTAL DISPLAY -->
+              <div class="calc-summary-box">
+                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Total Collection Amount / ಒಟ್ಟು ಪಾವತಿ</div>
+                <div class="calc-summary-val" id="totalPaymentCalcVal">₹ 250 (₹ 200 + ₹ 50)</div>
+              </div>
+
+              <div class="form-group">
+                <label data-i18n="paymentMethod">Payment Method</label>
+                <div class="payment-options-group">
+                  <div class="payment-option-card" onclick="selectPaymentMethod(this, 'cash')">
+                    <div class="payment-option-left">
+                      <div class="radio-circle"></div>
+                      <div>
+                        <div class="option-title" data-i18n="cash">Cash (Manual Entry)</div>
+                        <div class="option-sub">Pay in person to Admin</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="payment-option-card selected" onclick="selectPaymentMethod(this, 'upi')">
+                    <div class="payment-option-left">
+                      <div class="radio-circle"></div>
+                      <div>
+                        <div class="option-title">UPI <i>(hemantha@ybl)</i></div>
+                        <div class="option-sub">GooglePay, PhonePe, Paytm</div>
+                      </div>
+                    </div>
+                    <span>✏️</span>
+                  </div>
+
+                  <div class="payment-option-card" onclick="selectPaymentMethod(this, 'bank')">
+                    <div class="payment-option-left">
+                      <div class="radio-circle"></div>
+                      <div>
+                        <div class="option-title" data-i18n="bankTransfer">Bank Transfer</div>
+                        <div class="option-sub">NEFT / IMPS Account</div>
+                      </div>
+                    </div>
+                    <span>🏛️</span>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-primary-wide" style="margin-top: 10px;" data-i18n="submitContribution">Submit Contribution</button>
+            </form>
+          </div>
+
+          <!-- SUB TAB 2: MONTH-WISE PAYMENT STATUS TRACKER -->
+          <div id="subTabContribStatus" style="display: none;">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label style="font-weight: 700;">Select Month / ತಿಂಗಳು ಆಯ್ಕೆಮಾಡಿ</label>
+              <select id="monthTrackerSelect" class="form-input" onchange="renderMonthWisePaymentTracker(this.value)" style="font-weight: 700;">
+                <option value="Oct 2026" selected>Oct 2026 (ಅಕ್ಟೋಬರ್ 2026)</option>
+                <option value="Sep 2026">Sep 2026 (ಸೆಪ್ಟೆಂಬರ್ 2026)</option>
+                <option value="Aug 2026">Aug 2026 (ಆಗಸ್ಟ್ 2026)</option>
+                <option value="Jul 2026">Jul 2026 (ಜುಲೈ 2026)</option>
+                <option value="Jun 2026">Jun 2026 (ಜೂನ್ 2026)</option>
+              </select>
             </div>
 
-            <div class="form-group">
-              <label data-i18n="yourContribution">Your Contribution</label>
-              <div class="input-box-wrapper">
-                <span class="currency-symbol">₹</span>
-                <input type="number" id="contribAmountInput" class="form-input" value="200" min="50" step="50" required style="padding-left: 36px;">
+            <!-- Month Summary Metrics -->
+            <div class="month-summary-grid">
+              <div class="status-summary-card done">
+                <div style="font-size: 11px; font-weight: 700; color: #047857;">🟢 DONE (PAID)</div>
+                <div style="font-size: 18px; font-weight: 900; color: #065F46; margin-top: 2px;" id="statusDoneCount">12 / 15</div>
+                <div style="font-size: 10px; color: #047857; margin-top: 2px;" id="statusDoneAmount">₹3,000 Total</div>
+              </div>
+
+              <div class="status-summary-card pending">
+                <div style="font-size: 11px; font-weight: 700; color: #B91C1C;">🔴 NOT DONE (PENDING)</div>
+                <div style="font-size: 18px; font-weight: 900; color: #991B1B; margin-top: 2px;" id="statusPendingCount">3 / 15</div>
+                <div style="font-size: 10px; color: #B91C1C; margin-top: 2px;" id="statusPendingAmount">₹750 Pending</div>
               </div>
             </div>
 
-            <div class="form-group">
-              <label data-i18n="paymentMethod">Payment Method</label>
-              <div class="payment-options-group">
-                <div class="payment-option-card" onclick="selectPaymentMethod(this, 'cash')">
-                  <div class="payment-option-left">
-                    <div class="radio-circle"></div>
-                    <div>
-                      <div class="option-title" data-i18n="cash">Cash (Manual Entry)</div>
-                      <div class="option-sub">Pay in person to Admin</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="payment-option-card selected" onclick="selectPaymentMethod(this, 'upi')">
-                  <div class="payment-option-left">
-                    <div class="radio-circle"></div>
-                    <div>
-                      <div class="option-title">UPI <i>(hemantha@ybl)</i></div>
-                      <div class="option-sub">GooglePay, PhonePe, Paytm</div>
-                    </div>
-                  </div>
-                  <span>✏️</span>
-                </div>
-
-                <div class="payment-option-card" onclick="selectPaymentMethod(this, 'bank')">
-                  <div class="payment-option-left">
-                    <div class="radio-circle"></div>
-                    <div>
-                      <div class="option-title" data-i18n="bankTransfer">Bank Transfer</div>
-                      <div class="option-sub">NEFT / IMPS Account</div>
-                    </div>
-                  </div>
-                  <span>🏛️</span>
-                </div>
-              </div>
+            <!-- Members Status List Container -->
+            <div id="monthTrackerContainer">
+              <!-- Rendered dynamically -->
             </div>
-
-            <button type="submit" class="btn-primary-wide" style="margin-top: 10px;" data-i18n="submitContribution">Submit Contribution</button>
-
-            <div class="notice-box">
-              <span>✅</span>
-              <div>ನಿಮ್ಮ ಕೊಡುಗೆ ಯಶಸ್ವಿಯಾಗಿ ದಾಖಲಾಗುತ್ತದೆ. Your contribution will be recorded successfully.</div>
-            </div>
-          </form>
+          </div>
         </div>
 
 
@@ -517,48 +577,43 @@
 
 
         <!-- ============================================================
-             SCREEN 8: REPORTS & SUMMARY SCREEN
+             SCREEN 8: FINANCIAL REPORTS & OB / CB BALANCE SHEET
              ============================================================ -->
         <div class="screen" id="screen-reports">
           <div class="app-header">
             <div class="header-left">
               <button class="btn-back" onclick="navigateTo('dashboard')">←</button>
               <div class="header-title-box">
-                <h2 data-i18n="reportsSummary">Reports & Summary</h2>
-                <p>ವರದಿಗಳು & ಸಾರಾಂಶ</p>
+                <h2 data-i18n="reportsSummary">Financial Reports</h2>
+                <p>ವರದಿಗಳು & ಲೆಕ್ಕಪತ್ರ ಸಾರಾಂಶ (OB / CB)</p>
               </div>
             </div>
             <button class="lang-toggle-btn" onclick="toggleLanguage()" style="padding: 4px 10px; font-size: 11px;">🌐 <span class="lang-btn-text">English</span></button>
           </div>
 
-          <div class="filter-tabs">
-            <button class="chip-tab active">Overview</button>
-            <button class="chip-tab">Monthly</button>
-            <button class="chip-tab">Yearly</button>
+          <!-- Frequency Mode Switcher Tabs -->
+          <div class="filter-tabs" style="margin-bottom: 12px;">
+            <button class="chip-tab active" id="tabReportMonthly" onclick="selectReportPeriodType('monthly', this)">📅 Monthly / ಮಾಸಿಕ</button>
+            <button class="chip-tab" id="tabReportQuarterly" onclick="selectReportPeriodType('quarterly', this)">📊 Quarterly / ತ್ರೈಮಾಸಿಕ</button>
+            <button class="chip-tab" id="tabReportYearly" onclick="selectReportPeriodType('yearly', this)">📈 Yearly / ವಾರ್ಷಿಕ</button>
           </div>
 
-          <div class="info-list-card" style="text-align: center;">
-            <div style="font-size: 12px; color: var(--text-muted); font-weight: 700;">Total Savings / ಒಟ್ಟು ಉಳಿತಾಯ</div>
-            <div class="savings-total-val" style="font-size: 32px; font-weight: 900; color: var(--primary-green);">₹ 90,000</div>
+          <!-- Dynamic Period Selector Dropdown -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label style="font-weight: 700;">Report Timeframe / ಲೆಕ್ಕದ ಅವಧಿ</label>
+            <select id="reportPeriodSelect" class="form-input" onchange="renderFinancialReportSheet()" style="font-weight: 700;">
+              <!-- Options populated dynamically based on selected tab -->
+            </select>
           </div>
 
-          <div class="metrics-grid">
-            <div class="metric-card card-blue">
-              <div class="metric-title">Total Interest Paid</div>
-              <div class="metric-value">₹ 4,500</div>
-              <div class="metric-sub">(approx)</div>
-            </div>
-
-            <div class="metric-card card-orange">
-              <div class="metric-title">Total Expenses</div>
-              <div class="metric-value expenses-total-val">₹ 8,450</div>
-              <div class="metric-sub">(this year)</div>
-            </div>
+          <!-- FINANCIAL STATEMENT LEDGER (OB / INFLOW / OUTFLOW / CB) -->
+          <div class="financial-ledger-card" id="reportFinancialSheet">
+            <!-- Rendered dynamically by renderFinancialReportSheet() -->
           </div>
 
           <!-- Savings Progress Chart -->
           <div class="chart-card">
-            <div class="chart-title">Savings Progress (Last 2 Years)</div>
+            <div class="chart-title">Savings & Interest Growth (Last 2 Years)</div>
             <div class="bar-chart-visual">
               <div class="bar-column">
                 <div class="bar-fill" style="height: 50%;">
@@ -578,7 +633,7 @@
 
           <div class="notice-box">
             <span>🎯</span>
-            <div data-i18n="ourGoal">ನಮ್ಮ ಗುರಿ – ಎಲ್ಲರಿಗೂ ಲಾಭ / Our goal – Benefit for all members.</div>
+            <div data-i18n="ourGoal">ನಮ್ಮ ಗುರಿ – ಎಲ್ಲರಿಗೂ ಪಾರದರ್ಶಕ ಉಳಿತಾಯ / Our goal – Transparent group savings.</div>
           </div>
         </div>
 

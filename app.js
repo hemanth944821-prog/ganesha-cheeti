@@ -413,6 +413,7 @@ function handleLogout() {
 function populateMemberDropdowns() {
   const selPwd = document.getElementById('pwdMemberSelect');
   const selDraw = document.getElementById('drawMemberSelect');
+  const selContrib = document.getElementById('contribMemberSelect');
 
   const optionsHtml = membersData.map(m => {
     const name = (currentLang === 'kn') ? m.nameKn : m.nameEn;
@@ -421,6 +422,7 @@ function populateMemberDropdowns() {
 
   if (selPwd) selPwd.innerHTML = optionsHtml;
   if (selDraw) selDraw.innerHTML = optionsHtml;
+  if (selContrib) selContrib.innerHTML = optionsHtml;
 }
 
 // Switch Active Screen
@@ -431,6 +433,13 @@ function navigateTo(screenId) {
   const target = document.getElementById(`screen-${screenId}`);
   if (target) {
     target.classList.add('active-screen');
+  }
+
+  if (screenId === 'reports') {
+    selectReportPeriodType('monthly');
+  } else if (screenId === 'contribution') {
+    const month = document.getElementById('monthTrackerSelect')?.value || 'Oct 2026';
+    renderMonthWisePaymentTracker(month);
   }
 
   const navBar = document.getElementById('appBottomNav');
@@ -639,16 +648,37 @@ function closeModal(modalId) {
 
 function handleContributionSubmit(event) {
   event.preventDefault();
-  const amtInput = document.getElementById('contribAmountInput');
-  const val = parseInt(amtInput ? amtInput.value : 200, 10);
+  const memberId = parseInt(document.getElementById('contribMemberSelect')?.value || 1, 10);
+  const month = document.getElementById('contribMonthSelect')?.value || 'Oct 2026';
+  const cheetiAmt = parseInt(document.getElementById('contribAmountInput')?.value || 200, 10);
+  const interestAmt = parseInt(document.getElementById('contribInterestInput')?.value || 50, 10);
   
-  totalSavingsVal += val;
+  totalSavingsVal += cheetiAmt;
+  totalInterestVal += interestAmt;
+
   document.querySelectorAll('.savings-total-val').forEach(el => {
     el.textContent = `₹ ${totalSavingsVal.toLocaleString()}`;
   });
 
-  showToast(currentLang === 'kn' ? 'ನಿಮ್ಮ ಕೊಡುಗೆ ಯಶಸ್ವಿಯಾಗಿ ಸಲ್ಲಿಕೆಯಾಗಿದೆ!' : 'Your contribution has been recorded successfully!', 'success');
-  navigateTo('dashboard');
+  // Mark in payments tracker state
+  if (!memberPaymentsData[month]) {
+    renderMonthWisePaymentTracker(month);
+  }
+
+  const rec = memberPaymentsData[month]?.find(r => r.memberId === memberId);
+  if (rec) {
+    rec.isPaid = true;
+    rec.amount = cheetiAmt;
+    rec.interest = interestAmt;
+    rec.date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    rec.method = 'UPI';
+  }
+
+  showToast(currentLang === 'kn' 
+    ? `ಕೊಡುಗೆ ಯಶಸ್ವಿಯಾಗಿ ದಾಖಲಾಗಿದೆ! (₹${cheetiAmt} ಚೀಟಿ + ₹${interestAmt} ಬಡ್ಡಿ = ₹${cheetiAmt + interestAmt})` 
+    : `Contribution submitted! (₹${cheetiAmt} Cheeti + ₹${interestAmt} Interest = ₹${cheetiAmt + interestAmt})`, 'success');
+
+  switchContributionSubTab('status');
 }
 
 async function handleAddExpenseSubmit(event) {
@@ -1091,6 +1121,260 @@ async function testAdminPushNotification() {
   } else {
     showToast(currentLang === 'kn' ? 'ಅಧಿಸೂಚನೆಗಳ ಅನುಮತಿಯನ್ನು ನೀಡಿ (Allow notifications).' : 'Please allow notifications in browser settings to see system popups.', 'warning');
   }
+}
+
+// ============================================================
+// MONTH-WISE PAYMENT TRACKER & FINANCIAL STATEMENT ENGINE (OB/CB)
+// ============================================================
+
+let memberPaymentsData = {
+  'Oct 2026': [
+    { memberId: 1, nameEn: 'Ganesh (Admin)', nameKn: 'ಗಣೇಶ್ (ಅಡ್ಮಿನ್)', code: 'M#01', amount: 200, interest: 50, date: '10 Oct 2026', method: 'UPI', isPaid: true },
+    { memberId: 2, nameEn: 'Ramesh', nameKn: 'ರಮೇಶ್', code: 'M#02', amount: 200, interest: 50, date: '09 Oct 2026', method: 'Cash', isPaid: true },
+    { memberId: 3, nameEn: 'Suresh', nameKn: 'ಸುರೇಶ್', code: 'M#03', amount: 200, interest: 50, date: '11 Oct 2026', method: 'UPI', isPaid: true },
+    { memberId: 4, nameEn: 'Mahesh', nameKn: 'ಮಹೇಶ್', code: 'M#04', amount: 200, interest: 50, date: '10 Oct 2026', method: 'UPI', isPaid: true },
+    { memberId: 5, nameEn: 'Ravi', nameKn: 'ರವಿ', code: 'M#05', amount: 200, interest: 50, date: '08 Oct 2026', method: 'Cash', isPaid: true },
+    { memberId: 6, nameEn: 'Shankar', nameKn: 'ಶಂಕರ್', code: 'M#06', amount: 200, interest: 50, date: '12 Oct 2026', method: 'UPI', isPaid: true },
+    { memberId: 7, nameEn: 'Ramesh Kumar', nameKn: 'ರಮೇಶ್ ಕುಮಾರ್', code: 'M#07', amount: 200, interest: 50, date: '10 Oct 2026', method: 'UPI', isPaid: true },
+    { memberId: 8, nameEn: 'Lakshmi', nameKn: 'ಲಕ್ಷ್ಮಿ', code: 'M#08', amount: 200, interest: 50, date: '09 Oct 2026', method: 'UPI', isPaid: true },
+    { memberId: 9, nameEn: 'Anitha', nameKn: 'ಅನಿತಾ', code: 'M#09', amount: 200, interest: 50, date: '10 Oct 2026', method: 'Bank Transfer', isPaid: true },
+    { memberId: 10, nameEn: 'Kumar', nameKn: 'ಕುಮಾರ್', code: 'M#10', amount: 200, interest: 50, date: '11 Oct 2026', method: 'UPI', isPaid: true },
+    { memberId: 11, nameEn: 'Pooja', nameKn: 'ಪೂಜಾ', code: 'M#11', amount: 200, interest: 50, date: '10 Oct 2026', method: 'Cash', isPaid: true },
+    { memberId: 12, nameEn: 'Manjunath', nameKn: 'ಮಂಜುನಾಥ್', code: 'M#12', amount: 200, interest: 50, date: '12 Oct 2026', method: 'UPI', isPaid: true },
+    { memberId: 13, nameEn: 'Shivaram', nameKn: 'ಶಿವರಾಮ್', code: 'M#13', amount: 0, interest: 0, date: null, method: null, isPaid: false },
+    { memberId: 14, nameEn: 'Basavaraj', nameKn: 'ಬಸವರಾಜ್', code: 'M#14', amount: 0, interest: 0, date: null, method: null, isPaid: false },
+    { memberId: 15, nameEn: 'Venkatesh', nameKn: 'ವೆಂಕಟೇಶ್', code: 'M#15', amount: 0, interest: 0, date: null, method: null, isPaid: false }
+  ]
+};
+
+// Switch Contribution Sub-Tabs (Pay vs Month Status)
+function switchContributionSubTab(subTab) {
+  const tabPay = document.getElementById('tabContribPay');
+  const tabStatus = document.getElementById('tabContribStatus');
+  const divPay = document.getElementById('subTabContribPay');
+  const divStatus = document.getElementById('subTabContribStatus');
+
+  if (subTab === 'pay') {
+    if (tabPay) tabPay.classList.add('active');
+    if (tabStatus) tabStatus.classList.remove('active');
+    if (divPay) divPay.style.display = 'block';
+    if (divStatus) divStatus.style.display = 'none';
+  } else {
+    if (tabStatus) tabStatus.classList.add('active');
+    if (tabPay) tabPay.classList.remove('active');
+    if (divStatus) divStatus.style.display = 'block';
+    if (divPay) divPay.style.display = 'none';
+    const month = document.getElementById('monthTrackerSelect')?.value || 'Oct 2026';
+    renderMonthWisePaymentTracker(month);
+  }
+}
+
+// Live Calculate Monthly Cheeti + Interest total
+function updateTotalPaymentCalc() {
+  const cheeti = parseInt(document.getElementById('contribAmountInput')?.value || 200, 10);
+  const interest = parseInt(document.getElementById('contribInterestInput')?.value || 50, 10);
+  const total = cheeti + interest;
+
+  const calcEl = document.getElementById('totalPaymentCalcVal');
+  if (calcEl) {
+    calcEl.textContent = `₹ ${total.toLocaleString()} (₹ ${cheeti} Cheeti + ₹ ${interest} Interest)`;
+  }
+}
+
+// Render Month-wise Payment Status List (Paid vs Pending)
+function renderMonthWisePaymentTracker(month = 'Oct 2026') {
+  const container = document.getElementById('monthTrackerContainer');
+  const countDoneEl = document.getElementById('statusDoneCount');
+  const amountDoneEl = document.getElementById('statusDoneAmount');
+  const countPendingEl = document.getElementById('statusPendingCount');
+  const amountPendingEl = document.getElementById('statusPendingAmount');
+
+  // Generate list for month if not present
+  if (!memberPaymentsData[month]) {
+    memberPaymentsData[month] = membersData.map((m, idx) => ({
+      memberId: m.id,
+      nameEn: m.nameEn,
+      nameKn: m.nameKn,
+      code: m.code,
+      amount: idx < 10 ? 200 : 0,
+      interest: idx < 10 ? 50 : 0,
+      date: idx < 10 ? '10th of Month' : null,
+      method: idx < 10 ? 'UPI' : null,
+      isPaid: idx < 10
+    }));
+  }
+
+  const records = memberPaymentsData[month];
+  const paidList = records.filter(r => r.isPaid);
+  const pendingList = records.filter(r => !r.isPaid);
+
+  const totalPaidSum = paidList.reduce((sum, r) => sum + r.amount + r.interest, 0);
+  const totalPendingSum = pendingList.length * 250;
+
+  if (countDoneEl) countDoneEl.textContent = `${paidList.length} / ${records.length}`;
+  if (amountDoneEl) amountDoneEl.textContent = `₹ ${totalPaidSum.toLocaleString()} Total`;
+  if (countPendingEl) countPendingEl.textContent = `${pendingList.length} / ${records.length}`;
+  if (amountPendingEl) amountPendingEl.textContent = `₹ ${totalPendingSum.toLocaleString()} Pending`;
+
+  if (!container) return;
+
+  container.innerHTML = records.map(r => {
+    const name = (currentLang === 'kn') ? (r.nameKn || r.nameEn) : r.nameEn;
+    const isTodayPaid = r.isPaid;
+    const totalVal = r.amount + r.interest;
+
+    return `
+      <div class="payment-member-card">
+        <div>
+          <div style="font-weight: 700; font-size: 13px; color: var(--text-main);">${r.code} - ${name}</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+            ${isTodayPaid ? `₹ ${r.amount} Cheeti + ₹ ${r.interest} Interest (${r.method}) • ${r.date}` : `Monthly ₹200 + ₹50 Interest = ₹250 Due`}
+          </div>
+        </div>
+        <div>
+          ${isTodayPaid 
+            ? `<span class="status-pill done">✅ DONE (₹${totalVal})</span>`
+            : `<div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                 <span class="status-pill pending">⏳ NOT DONE</span>
+                 ${(currentUser && currentUser.Role === 'Admin') 
+                   ? `<button class="chip-tab" style="background:#064E3B; color:white; padding:3px 8px; font-size:10px;" onclick="markMemberPaidByAdmin('${month}', ${r.memberId})">⚡ Mark Paid</button>`
+                   : ''}
+               </div>`
+          }
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Admin Mark Member Paid Action
+function markMemberPaidByAdmin(month, memberId) {
+  if (!memberPaymentsData[month]) return;
+  const target = memberPaymentsData[month].find(r => r.memberId === memberId);
+  if (target) {
+    target.isPaid = true;
+    target.amount = 200;
+    target.interest = 50;
+    target.date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    target.method = 'Cash (Admin Entry)';
+
+    totalSavingsVal += 200;
+    document.querySelectorAll('.savings-total-val').forEach(el => {
+      el.textContent = `₹ ${totalSavingsVal.toLocaleString()}`;
+    });
+
+    renderMonthWisePaymentTracker(month);
+    showToast(currentLang === 'kn' ? `${target.nameKn || target.nameEn} ಪಾವತಿ ಸ್ವೀಕರಿಸಲಾಗಿದೆ! (₹200 + ₹50)` : `Payment recorded for ${target.nameEn}! (₹200 Cheeti + ₹50 Interest)`, 'success');
+  }
+}
+
+// Report Frequency Type Toggle
+let selectedReportPeriodTypeVal = 'monthly';
+
+function selectReportPeriodType(type, btnEl) {
+  selectedReportPeriodTypeVal = type;
+  document.querySelectorAll('#tabReportMonthly, #tabReportQuarterly, #tabReportYearly').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  const sel = document.getElementById('reportPeriodSelect');
+  if (!sel) return;
+
+  if (type === 'monthly') {
+    sel.innerHTML = `
+      <option value="Oct 2026" selected>Oct 2026 (ಅಕ್ಟೋಬರ್ 2026)</option>
+      <option value="Sep 2026">Sep 2026 (ಸೆಪ್ಟೆಂಬರ್ 2026)</option>
+      <option value="Aug 2026">Aug 2026 (ಆಗಸ್ಟ್ 2026)</option>
+      <option value="Jul 2026">Jul 2026 (ಜುಲೈ 2026)</option>
+    `;
+  } else if (type === 'quarterly') {
+    sel.innerHTML = `
+      <option value="Q3 2026" selected>Q3 2026 (Jul - Sep / ಜುಲೈ - ಸೆಪ್ಟೆಂಬರ್)</option>
+      <option value="Q2 2026">Q2 2026 (Apr - Jun / ಏಪ್ರಿಲ್ - ಜೂನ್)</option>
+      <option value="Q1 2026">Q1 2026 (Jan - Mar / ಜನವರಿ - ಮಾರ್ಚ್)</option>
+    `;
+  } else if (type === 'yearly') {
+    sel.innerHTML = `
+      <option value="Year 2026-2027" selected>2026 - 2027 (Year 2 / ವರ್ಷ 2)</option>
+      <option value="Year 2025-2026">2025 - 2026 (Year 1 / ವರ್ಷ 1)</option>
+    `;
+  }
+
+  renderFinancialReportSheet();
+}
+
+// Render Financial Ledger Statement (OB, Inflow, Outflow, CB)
+function renderFinancialReportSheet() {
+  const container = document.getElementById('reportFinancialSheet');
+  const selVal = document.getElementById('reportPeriodSelect')?.value || 'Oct 2026';
+
+  let ob = 87000;
+  let savingsInflow = 3000;
+  let interestInflow = 750;
+  let payoutOutflow = 2400;
+  let expenseOutflow = 1200;
+
+  if (selectedReportPeriodTypeVal === 'quarterly') {
+    ob = 81000;
+    savingsInflow = 9000;
+    interestInflow = 2250;
+    payoutOutflow = 7200;
+    expenseOutflow = 3200;
+  } else if (selectedReportPeriodTypeVal === 'yearly') {
+    ob = 45000;
+    savingsInflow = 36000;
+    interestInflow = 9000;
+    payoutOutflow = 28800;
+    expenseOutflow = 8450;
+  }
+
+  const totalInflow = savingsInflow + interestInflow;
+  const totalOutflow = payoutOutflow + expenseOutflow;
+  const cb = ob + totalInflow - totalOutflow;
+
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="ledger-title-header">
+      <span>📊 Financial Statement (${selVal})</span>
+      <span style="font-size:11px; background:#D1FAE5; color:#047857; padding:2px 6px; border-radius:4px;">Audited</span>
+    </div>
+
+    <!-- Opening Balance -->
+    <div class="ledger-row ledger-row-ob">
+      <span>🏛️ Opening Balance (OB) / ಆರಂಭಿಕ ಶಿಲ್ಕು</span>
+      <span>₹ ${ob.toLocaleString()}</span>
+    </div>
+
+    <!-- Inflow / Collections -->
+    <div class="ledger-row">
+      <span class="ledger-add">➕ Member Savings Collection (15 Members × ₹200)</span>
+      <span class="ledger-add">+ ₹ ${savingsInflow.toLocaleString()}</span>
+    </div>
+    <div class="ledger-row">
+      <span class="ledger-add">➕ Monthly Loan Interest Collected (₹50/member)</span>
+      <span class="ledger-add">+ ₹ ${interestInflow.toLocaleString()}</span>
+    </div>
+
+    <!-- Outflow / Deductions -->
+    <div class="ledger-row">
+      <span class="ledger-deduct">➖ Cheeti Winner Payout Distributed</span>
+      <span class="ledger-deduct">- ₹ ${payoutOutflow.toLocaleString()}</span>
+    </div>
+    <div class="ledger-row">
+      <span class="ledger-deduct">➖ Festival & Temple Group Expenses</span>
+      <span class="ledger-deduct">- ₹ ${expenseOutflow.toLocaleString()}</span>
+    </div>
+
+    <!-- Closing Balance -->
+    <div class="ledger-row ledger-row-cb">
+      <span>💰 Net Closing Balance (CB) / ಅಂತಿಮ ಶಿಲ್ಕು</span>
+      <span>₹ ${cb.toLocaleString()}</span>
+    </div>
+
+    <div style="font-size:10px; color:var(--text-muted); text-align:center; margin-top:8px;">
+      Formula: CB = Opening Balance (₹${ob.toLocaleString()}) + Inflows (₹${totalInflow.toLocaleString()}) - Outflows (₹${totalOutflow.toLocaleString()})
+    </div>
+  `;
 }
 
 
