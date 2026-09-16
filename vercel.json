@@ -16,6 +16,14 @@
     {
       "src": "app.js",
       "use": "@vercel/static"
+    },
+    {
+      "src": "manifest.json",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "ganesha_avatar.png",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
