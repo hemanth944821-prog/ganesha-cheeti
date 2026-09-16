@@ -164,6 +164,7 @@ const expensesData = [
 
 // DOM Initialization
 document.addEventListener('DOMContentLoaded', () => {
+  registerServiceWorker();
   fetchLiveDataFromBackend();
   renderMembersList();
   renderExpensesList('all');
@@ -786,12 +787,36 @@ async function requestNotificationPermission() {
   }
 }
 
-// Send Web Push Notification to Device / Browser
-function sendWebPushNotification(title, body) {
+// Register Service Worker for PWA & Mobile Lockscreen Push Notifications
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('✅ Service Worker registered successfully:', reg.scope))
+      .catch(err => console.warn('Service Worker registration failed:', err.message));
+  }
+}
+
+// Send Web Push Notification to Device / Browser (Desktop Chrome & Mobile Android/iOS)
+async function sendWebPushNotification(title, body) {
   playNotificationSound();
 
   if ('Notification' in window && Notification.permission === 'granted') {
     try {
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.ready;
+        if (reg && reg.showNotification) {
+          reg.showNotification(title, {
+            body: body,
+            icon: 'ganesha_avatar.png',
+            badge: 'ganesha_avatar.png',
+            vibrate: [200, 100, 200],
+            tag: 'ganesha-cheeti-notif',
+            renotify: true
+          });
+          return;
+        }
+      }
+
       new Notification(title, {
         body: body,
         icon: 'ganesha_avatar.png',
@@ -801,6 +826,7 @@ function sendWebPushNotification(title, body) {
       });
     } catch (err) {
       console.warn('Browser Notification error:', err.message);
+      showToast(`🔔 ${title}: ${body}`, 'info', 4500);
     }
   } else {
     showToast(`🔔 ${title}: ${body}`, 'info', 4500);
