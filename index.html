@@ -167,9 +167,21 @@
           <div id="adminModeBanner" style="display:none; background: #991B1B; color: white; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
             <span>👑 Admin Control Active (ಗಣೇಶ್ - ಅಡ್ಮಿನ್)</span>
             <div style="display:flex; gap:6px; flex-wrap: wrap;">
+              <button class="chip-tab" style="background: #10B981; color: white; padding: 4px 10px; font-size: 11px; font-weight: 700;" onclick="renderAdminPendingApprovalsModal()">✅ Approvals <span id="pendingApprovalsBadgeCount" style="background:#EF4444; color:white; padding:1px 6px; border-radius:10px; font-size:10px;">1</span></button>
               <button class="chip-tab" style="background: #2563EB; color: white; padding: 4px 10px; font-size: 11px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" onclick="testAdminPushNotification()">🔔 Test Push Notif</button>
               <button class="chip-tab" style="background: #F59E0B; color: white; padding: 4px 10px; font-size: 11px;" onclick="openModal('modalSendNotification')">📢 Alert Members</button>
               <button class="chip-tab" style="background: white; color: #991B1B; padding: 4px 10px; font-size: 11px;" onclick="openModal('modalChangePassword')">Password</button>
+            </div>
+          </div>
+
+          <!-- MEMBER REJECTED PAYMENT ALERT BANNER -->
+          <div id="memberRejectedPaymentAlertCard" style="display:none; margin: 10px 0; background: #FEF2F2; border: 1.5px solid #FCA5A5; padding: 12px 14px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+              <div>
+                <div style="font-size:13px; font-weight:800; color:#991B1B;">❌ Payment Rejected by Admin (ಪಾವತಿ ತಿರಸ್ಕರಿಸಲಾಗಿದೆ)</div>
+                <div style="font-size:11px; color:#B91C1C; margin-top:4px;" id="rejectedPaymentReasonText">Reason: Incorrect UTR number. Please re-upload valid UPI screenshot.</div>
+              </div>
+              <button class="btn-primary-wide" style="width:auto; padding:6px 14px; font-size:11px; background:#DC2626; color:white; white-space:nowrap; border-radius:8px;" onclick="openFixRejectedPaymentModal()">✏️ Fix & Re-submit</button>
             </div>
           </div>
 
@@ -1109,6 +1121,73 @@
         </div>
 
         <button type="submit" class="btn-primary-wide">Save Loan Amount / ಉಳಿಸಿ</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN APPROVE / REJECT PAYMENTS MODAL -->
+  <div class="modal-overlay" id="modalAdminApprovePayments">
+    <div class="modal-box" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3>✅ Review & Approve Payments / ಪಾವತಿ ಪರಿಶೀಲನೆ</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalAdminApprovePayments')">✕</button>
+      </div>
+
+      <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; margin-bottom: 8px;">
+        Review member submitted receipts one-by-one before approving.
+      </div>
+
+      <div id="adminPendingApprovalsContainer">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- FULL RECEIPT IMAGE PREVIEW MODAL -->
+  <div class="modal-overlay" id="modalViewFullReceipt">
+    <div class="modal-box" style="text-align: center; max-width: 420px;">
+      <div class="modal-header">
+        <h3>🔍 Receipt Screenshot Preview</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalViewFullReceipt')">✕</button>
+      </div>
+      <div style="margin: 12px 0;">
+        <img id="fullReceiptImgViewer" alt="Receipt Full Preview" style="width: 100%; max-height: 420px; object-fit: contain; border-radius: 8px; border: 2px solid #10B981;">
+      </div>
+      <button class="btn-primary-wide" onclick="closeModal('modalViewFullReceipt')">Close Preview / ಮುಚ್ಚಿ</button>
+    </div>
+  </div>
+
+  <!-- MEMBER FIX REJECTED PAYMENT MODAL -->
+  <div class="modal-overlay" id="modalFixRejectedPayment">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>✏️ Fix & Re-submit Payment / ಪಾವತಿ ಸರಿಪಡಿಸಿ</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalFixRejectedPayment')">✕</button>
+      </div>
+
+      <div style="background: #FEF2F2; border: 1px solid #FCA5A5; padding: 10px; border-radius: 8px; font-size: 12px; color: #991B1B; margin-bottom: 12px;">
+        <div style="font-weight: 800;">Admin Rejection Comment:</div>
+        <div id="fixModalRejectionReason" style="margin-top: 2px;">Incorrect UTR number. Please re-upload valid UPI screenshot.</div>
+      </div>
+
+      <form onsubmit="handleResubmitPayment(event)">
+        <input type="hidden" id="fixSubmissionId">
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label>Updated UPI Ref / UTR Number</label>
+          <input type="text" id="fixUtrInput" class="form-input" placeholder="e.g. UTR: 987654321012" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Re-upload Payment Screenshot Image</label>
+          <input type="file" id="fixUpiReceiptFile" class="form-input" accept="image/*" onchange="previewFixReceipt(this)" style="padding: 5px;">
+        </div>
+
+        <div id="fixReceiptPreviewBox" style="display:none; text-align:center; margin-bottom:12px;">
+          <img id="fixReceiptImgPreview" alt="Fixed Receipt Preview" style="max-width:160px; max-height:140px; border-radius:8px; border:2px solid #0D9488;">
+        </div>
+
+        <button type="submit" class="btn-primary-wide">Re-submit for Approval / ಮರು-ಸಲ್ಲಿಸಿ</button>
       </form>
     </div>
   </div>

@@ -171,6 +171,8 @@ document.addEventListener('DOMContentLoaded', () => {
   loadNotificationsData();
   checkAutomatedReminders();
   updateI18nText();
+  updatePendingBadgeCount();
+  checkMemberRejectedPaymentAlert();
 });
 
 // --- CUSTOM MOBILE TOAST NOTIFICATION ENGINE (REPLACES BROWSER ALERTS) ---
@@ -649,39 +651,91 @@ function closeModal(modalId) {
   if (m) m.classList.remove('active');
 }
 
+// Global Payment Submissions State for Admin Verification & Approval
+let currentUploadedReceiptDataUrl = null;
+let currentFixReceiptDataUrl = null;
+
+let paymentSubmissions = [
+  {
+    id: 101,
+    memberId: 2,
+    nameEn: 'Ramesh',
+    nameKn: 'ರಮೇಶ್',
+    code: 'M#02',
+    month: 'Oct 2026',
+    cheetiAmt: 200,
+    interestAmt: 250, // 5% of ₹5,000 loan
+    totalAmt: 450,
+    method: 'UPI',
+    utr: 'UTR: 324598712365',
+    receiptImg: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 300 180"><rect width="300" height="180" fill="%230F766E" rx="10"/><text x="50%" y="30%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="16" font-weight="bold" font-family="sans-serif">Google Pay - Payment Successful</text><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="%23FDE047" font-size="20" font-weight="bold" font-family="sans-serif">₹ 450.00</text><text x="50%" y="75%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="12" font-family="sans-serif">Ref UTR: 324598712365 • Oct 2026</text></svg>',
+    status: 'Pending Approval',
+    rejectionReason: null,
+    submittedAt: 'Today, 10:30 AM'
+  }
+];
+
 function handleContributionSubmit(event) {
   event.preventDefault();
   const memberId = parseInt(document.getElementById('contribMemberSelect')?.value || 1, 10);
   const month = document.getElementById('contribMonthSelect')?.value || 'Oct 2026';
   const cheetiAmt = parseInt(document.getElementById('contribAmountInput')?.value || 200, 10);
   const interestAmt = parseInt(document.getElementById('contribInterestInput')?.value || 50, 10);
-  
-  totalSavingsVal += cheetiAmt;
-  totalInterestVal += interestAmt;
+  const totalAmt = cheetiAmt + interestAmt;
+  const utr = document.getElementById('contribUtrInput')?.value || 'UTR: ' + Math.floor(100000000000 + Math.random()*900000000000);
+  const member = membersData.find(m => m.id === memberId) || membersData[0];
 
-  document.querySelectorAll('.savings-total-val').forEach(el => {
-    el.textContent = `₹ ${totalSavingsVal.toLocaleString()}`;
-  });
+  const receiptImg = currentUploadedReceiptDataUrl || `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 300 180"><rect width="300" height="180" fill="%230D9488" rx="10"/><text x="50%" y="30%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="16" font-weight="bold" font-family="sans-serif">UPI Payment Receipt</text><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="%23FDE047" font-size="20" font-weight="bold" font-family="sans-serif">₹ ${totalAmt}.00</text><text x="50%" y="75%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="12" font-family="sans-serif">Ref: ${utr} • ${month}</text></svg>`;
 
-  // Mark in payments tracker state
+  // Create submission object in Pending Approval state
+  const newSubmission = {
+    id: Date.now(),
+    memberId: member.id,
+    nameEn: member.nameEn,
+    nameKn: member.nameKn,
+    code: member.code,
+    month: month,
+    cheetiAmt: cheetiAmt,
+    interestAmt: interestAmt,
+    totalAmt: totalAmt,
+    method: 'UPI',
+    utr: utr,
+    receiptImg: receiptImg,
+    status: 'Pending Approval',
+    rejectionReason: null,
+    submittedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+
+  paymentSubmissions.unshift(newSubmission);
+
+  // Mark in payments tracker state as Pending Approval
   if (!memberPaymentsData[month]) {
     renderMonthWisePaymentTracker(month);
   }
-
   const rec = memberPaymentsData[month]?.find(r => r.memberId === memberId);
   if (rec) {
-    rec.isPaid = true;
+    rec.isPaid = false;
+    rec.status = 'Pending Approval';
     rec.amount = cheetiAmt;
     rec.interest = interestAmt;
-    rec.date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-    rec.method = 'UPI';
+    rec.utr = utr;
   }
 
+  updatePendingBadgeCount();
+
   showToast(currentLang === 'kn' 
-    ? `ಕೊಡುಗೆ ಯಶಸ್ವಿಯಾಗಿ ದಾಖಲಾಗಿದೆ! (₹${cheetiAmt} ಚೀಟಿ + ₹${interestAmt} ಬಡ್ಡಿ = ₹${cheetiAmt + interestAmt})` 
-    : `Contribution submitted! (₹${cheetiAmt} Cheeti + ₹${interestAmt} Interest = ₹${cheetiAmt + interestAmt})`, 'success');
+    ? `ಪಾವತಿ ರಸೀದಿ ಸಲ್ಲಿಸಲಾಗಿದೆ! ಅಡ್ಮಿನ್ ಪರಿಶೀಲನೆಗೆ ಕಾಯುತ್ತಿದೆ ⏳ (₹${totalAmt})` 
+    : `Payment receipt submitted! Waiting for Admin verification ⏳ (Total ₹${totalAmt})`, 'success');
+
+  // Reset upload input & preview
+  currentUploadedReceiptDataUrl = null;
+  const fileInput = document.getElementById('contribUpiReceiptFile');
+  if (fileInput) fileInput.value = '';
+  const previewBox = document.getElementById('upiReceiptPreviewBox');
+  if (previewBox) previewBox.style.display = 'none';
 
   switchContributionSubTab('status');
+  checkMemberRejectedPaymentAlert();
 }
 
 async function handleAddExpenseSubmit(event) {
@@ -1226,6 +1280,22 @@ function renderMonthWisePaymentTracker(month = 'Oct 2026') {
     const isTodayPaid = r.isPaid;
     const totalVal = r.amount + r.interest;
 
+    let statusPillHtml = '';
+    if (r.isPaid) {
+      statusPillHtml = `<span class="status-pill done">✅ PAID (₹${totalVal})</span>`;
+    } else if (r.status === 'Pending Approval') {
+      statusPillHtml = `<span class="status-pill pending" style="background:#FEF3C7; color:#B45309; border:1px solid #FCD34D;">⏳ PENDING APPROVAL</span>`;
+    } else if (r.status === 'Rejected') {
+      statusPillHtml = `<span class="status-pill pending" style="background:#FEF2F2; color:#DC2626; border:1px solid #FCA5A5;">❌ REJECTED</span>`;
+    } else {
+      statusPillHtml = `<div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                 <span class="status-pill pending">⏳ NOT DONE</span>
+                 ${(currentUser && currentUser.Role === 'Admin') 
+                   ? `<button class="chip-tab" style="background:#064E3B; color:white; padding:3px 8px; font-size:10px;" onclick="markMemberPaidByAdmin('${month}', ${r.memberId})">⚡ Mark Paid</button>`
+                   : ''}
+               </div>`;
+    }
+
     return `
       <div class="payment-member-card">
         <div>
@@ -1235,15 +1305,7 @@ function renderMonthWisePaymentTracker(month = 'Oct 2026') {
           </div>
         </div>
         <div>
-          ${isTodayPaid 
-            ? `<span class="status-pill done">✅ DONE (₹${totalVal})</span>`
-            : `<div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
-                 <span class="status-pill pending">⏳ NOT DONE</span>
-                 ${(currentUser && currentUser.Role === 'Admin') 
-                   ? `<button class="chip-tab" style="background:#064E3B; color:white; padding:3px 8px; font-size:10px;" onclick="markMemberPaidByAdmin('${month}', ${r.memberId})">⚡ Mark Paid</button>`
-                   : ''}
-               </div>`
-          }
+          ${statusPillHtml}
         </div>
       </div>
     `;
@@ -1522,5 +1584,287 @@ function handleSaveMemberLoanSubmit(event) {
       : `Loan updated for ${m.nameEn} to ₹${principal.toLocaleString()}! (Next month interest auto-set to ₹${interest})`, 'success');
   }
 }
+
+// ============================================================
+// ADMIN PAYMENT VERIFICATION & ONE-BY-ONE APPROVAL ENGINE
+// ============================================================
+
+function updatePendingBadgeCount() {
+  const pendingCount = paymentSubmissions.filter(s => s.status === 'Pending Approval').length;
+  const badge = document.getElementById('pendingApprovalsBadgeCount');
+  if (badge) {
+    badge.textContent = pendingCount;
+    badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+  }
+}
+
+function renderAdminPendingApprovalsModal() {
+  const container = document.getElementById('adminPendingApprovalsContainer');
+  if (!container) return;
+
+  const pendingList = paymentSubmissions.filter(s => s.status === 'Pending Approval');
+
+  if (pendingList.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding: 30px 10px; color: var(--text-muted);">
+        <div style="font-size: 36px; margin-bottom: 8px;">🎉</div>
+        <div style="font-weight:800; font-size:15px; color: var(--text-main);">No Pending Approvals!</div>
+        <div style="font-size:12px; margin-top:4px;">All member payments are reviewed and verified.</div>
+      </div>
+    `;
+  } else {
+    container.innerHTML = pendingList.map(s => {
+      const name = currentLang === 'kn' ? (s.nameKn || s.nameEn) : s.nameEn;
+      const safeImgSrc = s.receiptImg ? s.receiptImg.replace(/'/g, "\\'") : '';
+      return `
+        <div style="background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 12px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed var(--border-color); padding-bottom: 8px; margin-bottom: 8px;">
+            <div>
+              <div style="font-weight: 800; font-size: 14px; color: var(--text-main);">${s.code} - ${name}</div>
+              <div style="font-size: 11px; color: var(--text-muted);">${s.month} • Submitted ${s.submittedAt}</div>
+            </div>
+            <span class="status-pill pending" style="font-size: 10px; background:#FEF3C7; color:#B45309; border:1px solid #FCD34D;">⏳ Pending Approval</span>
+          </div>
+
+          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+            <!-- Receipt Thumbnail preview -->
+            <div style="position: relative; cursor: pointer; border-radius: 8px; overflow: hidden; border: 1.5px solid #0D9488; min-width:75px;" onclick="viewFullReceiptImage('${safeImgSrc}')">
+              <img src="${s.receiptImg}" alt="Receipt Preview" style="width: 75px; height: 75px; object-fit: cover;">
+              <div style="position: absolute; bottom: 0; left:0; right:0; background: rgba(0,0,0,0.65); color: white; font-size: 8px; text-align: center; padding: 2px;">🔍 Preview</div>
+            </div>
+
+            <div style="flex: 1; font-size: 12px;">
+              <div style="font-weight: 800; color: #064E3B; font-size: 14px;">Total: ₹ ${s.totalAmt.toLocaleString()}</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">₹${s.cheetiAmt} Cheeti + ₹${s.interestAmt} Interest</div>
+              <div style="font-size: 11px; color: #0284C7; font-weight: 700; margin-top: 2px;">${s.utr}</div>
+              <button style="background: none; border: none; color: #0D9488; font-size: 11px; font-weight: 700; cursor: pointer; padding: 0; margin-top: 4px;" onclick="viewFullReceiptImage('${safeImgSrc}')">🔎 Click to View Full Screenshot</button>
+            </div>
+          </div>
+
+          <!-- Rejection comment box -->
+          <div style="margin-bottom: 10px;">
+            <input type="text" id="rejectReason_${s.id}" class="form-input" placeholder="Rejection reason (e.g. Incorrect UTR / Unclear receipt)" style="font-size: 11px; padding: 8px 10px;">
+          </div>
+
+          <!-- Actions -->
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-primary-wide" style="flex: 1; background: #10B981; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="approveMemberSubmission(${s.id})">
+              ✅ Approve / ಅನುಮೋದಿಸಿ
+            </button>
+            <button class="btn-primary-wide" style="flex: 1; background: #EF4444; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="rejectMemberSubmission(${s.id})">
+              ❌ Reject / ತಿರಸ್ಕರಿಸಿ
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  openModal('modalAdminApprovePayments');
+}
+
+function viewFullReceiptImage(imgSrc) {
+  const viewer = document.getElementById('fullReceiptImgViewer');
+  if (viewer) viewer.src = imgSrc;
+  openModal('modalViewFullReceipt');
+}
+
+function approveMemberSubmission(id) {
+  const sub = paymentSubmissions.find(s => s.id === id);
+  if (!sub) return;
+
+  sub.status = 'Approved';
+
+  // Mark in payments data as Paid!
+  if (!memberPaymentsData[sub.month]) {
+    renderMonthWisePaymentTracker(sub.month);
+  }
+  const rec = memberPaymentsData[sub.month]?.find(r => r.memberId === sub.memberId);
+  if (rec) {
+    rec.isPaid = true;
+    rec.status = 'Approved';
+    rec.amount = sub.cheetiAmt;
+    rec.interest = sub.interestAmt;
+    rec.date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    rec.method = 'UPI';
+  }
+
+  // Update total savings
+  totalSavingsVal += sub.cheetiAmt;
+  document.querySelectorAll('.savings-total-val').forEach(el => {
+    el.textContent = `₹ ${totalSavingsVal.toLocaleString()}`;
+  });
+
+  // Push notification to member
+  const notifMsg = `✅ Your payment of ₹${sub.totalAmt} for ${sub.month} has been Approved by Admin!`;
+  notificationsData.unshift({
+    id: Date.now(),
+    titleEn: 'Payment Approved ✅',
+    titleKn: 'ಪಾವತಿ ಅನುಮೋದಿಸಲಾಗಿದೆ ✅',
+    messageEn: notifMsg,
+    messageKn: `${sub.month} ತಿಂಗಳ ₹${sub.totalAmt} ಪಾವತಿಯನ್ನು ಅಡ್ಮಿನ್ ಯಶಸ್ವಿಯಾಗಿ ಅನುಮೋದಿಸಿದ್ದಾರೆ!`,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    type: 'success',
+    isRead: false
+  });
+  updateNotificationBadge();
+
+  if ('Notification' in window && Notification.permission === 'granted') {
+    navigator.serviceWorker?.ready.then(reg => {
+      reg.showNotification('Ganesha Cheeti - Payment Approved ✅', {
+        body: notifMsg,
+        icon: '/ganesha_avatar.png',
+        badge: '/ganesha_avatar.png'
+      });
+    });
+  }
+
+  showToast(currentLang === 'kn' ? `${sub.nameKn || sub.nameEn} ಪಾವತಿ ಯಶಸ್ವಿಯಾಗಿ ಅನುಮೋದಿಸಲಾಗಿದೆ!` : `Payment of ₹${sub.totalAmt} approved for ${sub.nameEn}!`, 'success');
+
+  updatePendingBadgeCount();
+  renderAdminPendingApprovalsModal();
+  renderMonthWisePaymentTracker(sub.month);
+  checkMemberRejectedPaymentAlert();
+}
+
+function rejectMemberSubmission(id) {
+  const sub = paymentSubmissions.find(s => s.id === id);
+  if (!sub) return;
+
+  const reasonInput = document.getElementById(`rejectReason_${id}`);
+  const reason = (reasonInput && reasonInput.value.trim()) 
+    ? reasonInput.value.trim() 
+    : 'Incorrect UTR number or unclear receipt. Please re-upload.';
+
+  sub.status = 'Rejected';
+  sub.rejectionReason = reason;
+
+  // Mark in payments data as Rejected
+  if (!memberPaymentsData[sub.month]) {
+    renderMonthWisePaymentTracker(sub.month);
+  }
+  const rec = memberPaymentsData[sub.month]?.find(r => r.memberId === sub.memberId);
+  if (rec) {
+    rec.isPaid = false;
+    rec.status = 'Rejected';
+  }
+
+  // Push notification to member
+  const notifMsg = `❌ Payment Rejected by Admin for ${sub.month}. Reason: ${reason}`;
+  notificationsData.unshift({
+    id: Date.now(),
+    titleEn: 'Payment Rejected ❌',
+    titleKn: 'ಪಾವತಿ ತಿರಸ್ಕರಿಸಲಾಗಿದೆ ❌',
+    messageEn: notifMsg,
+    messageKn: `${sub.month} ಪಾವತಿ ತಿರಸ್ಕರಿಸಲಾಗಿದೆ. ಕಾರಣ: ${reason}`,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    type: 'error',
+    isRead: false
+  });
+  updateNotificationBadge();
+
+  if ('Notification' in window && Notification.permission === 'granted') {
+    navigator.serviceWorker?.ready.then(reg => {
+      reg.showNotification('Ganesha Cheeti - Payment Rejected ❌', {
+        body: notifMsg,
+        icon: '/ganesha_avatar.png',
+        badge: '/ganesha_avatar.png'
+      });
+    });
+  }
+
+  showToast(currentLang === 'kn' ? `ಪಾವತಿ ತಿರಸ್ಕರಿಸಲಾಗಿದೆ. ಸದಸ್ಯರಿಗೆ ಸೂಚನೆ ಕಳುಹಿಸಲಾಗಿದೆ.` : `Payment rejected. Sent back to user to fix.`, 'error');
+
+  updatePendingBadgeCount();
+  renderAdminPendingApprovalsModal();
+  renderMonthWisePaymentTracker(sub.month);
+  checkMemberRejectedPaymentAlert();
+}
+
+function checkMemberRejectedPaymentAlert() {
+  const alertCard = document.getElementById('memberRejectedPaymentAlertCard');
+  const reasonText = document.getElementById('rejectedPaymentReasonText');
+  if (!alertCard) return;
+
+  const rejectedSub = paymentSubmissions.find(s => s.status === 'Rejected');
+
+  if (rejectedSub) {
+    if (reasonText) {
+      reasonText.textContent = `Member: ${rejectedSub.nameEn} (${rejectedSub.month}) • Reason: ${rejectedSub.rejectionReason}`;
+    }
+    alertCard.style.display = 'block';
+  } else {
+    alertCard.style.display = 'none';
+  }
+}
+
+function openFixRejectedPaymentModal(subId) {
+  const rejectedSub = subId 
+    ? paymentSubmissions.find(s => s.id === subId)
+    : paymentSubmissions.find(s => s.status === 'Rejected');
+
+  if (!rejectedSub) return;
+
+  const fixSubIdEl = document.getElementById('fixSubmissionId');
+  const fixUtrEl = document.getElementById('fixUtrInput');
+  const fixReasonEl = document.getElementById('fixModalRejectionReason');
+
+  if (fixSubIdEl) fixSubIdEl.value = rejectedSub.id;
+  if (fixUtrEl) fixUtrEl.value = rejectedSub.utr;
+  if (fixReasonEl) fixReasonEl.textContent = rejectedSub.rejectionReason;
+
+  const previewBox = document.getElementById('fixReceiptPreviewBox');
+  const imgPreview = document.getElementById('fixReceiptImgPreview');
+  if (imgPreview && rejectedSub.receiptImg) {
+    imgPreview.src = rejectedSub.receiptImg;
+    if (previewBox) previewBox.style.display = 'block';
+  }
+
+  openModal('modalFixRejectedPayment');
+}
+
+function previewFixReceipt(input) {
+  const previewBox = document.getElementById('fixReceiptPreviewBox');
+  const imgPreview = document.getElementById('fixReceiptImgPreview');
+
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      currentFixReceiptDataUrl = e.target.result;
+      if (imgPreview) imgPreview.src = e.target.result;
+      if (previewBox) previewBox.style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function handleResubmitPayment(event) {
+  event.preventDefault();
+  const subId = parseInt(document.getElementById('fixSubmissionId')?.value || 0, 10);
+  const newUtr = document.getElementById('fixUtrInput')?.value || '';
+
+  const sub = paymentSubmissions.find(s => s.id === subId);
+  if (sub) {
+    sub.utr = newUtr;
+    if (currentFixReceiptDataUrl) {
+      sub.receiptImg = currentFixReceiptDataUrl;
+    }
+    sub.status = 'Pending Approval';
+    sub.rejectionReason = null;
+    sub.submittedAt = 'Re-submitted just now';
+
+    showToast(currentLang === 'kn'
+      ? 'ಪಾವತಿ ಯಶಸ್ವಿಯಾಗಿ ಮರು-ಸಲ್ಲಿಸಲಾಗಿದೆ! ಅಡ್ಮಿನ್‌ಗೆ ಕಳುಹಿಸಲಾಗಿದೆ ⏳'
+      : 'Payment re-submitted for Admin approval! ⏳', 'success');
+
+    closeModal('modalFixRejectedPayment');
+    currentFixReceiptDataUrl = null;
+
+    updatePendingBadgeCount();
+    checkMemberRejectedPaymentAlert();
+    renderMonthWisePaymentTracker(sub.month);
+  }
+}
+
 
 
