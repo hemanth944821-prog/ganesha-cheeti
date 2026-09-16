@@ -1,6 +1,11 @@
 // ============================================================
-// Ganesha Cheeti (ಗಣೇಶ ಚೀಟಿ) - Core App Logic, Auth & Admin Engine
+// Ganesha Cheeti (ಗಣೇಶ ಚೀಟಿ) - Core Mobile App Logic & i18n
 // ============================================================
+
+// Base API URL (Relative path for Vercel deployment & local proxy)
+const API_BASE_URL = window.location.origin.includes('localhost:3000') 
+  ? 'http://localhost:5000/api' 
+  : '/api';
 
 // Bilingual Dictionary
 const i18n = {
@@ -127,9 +132,9 @@ let currentLang = 'kn';
 let currentScreen = 'splash';
 let totalSavingsVal = 90000;
 let totalExpensesVal = 8450;
-let currentUser = null; // Currently logged in user object
+let currentUser = null;
 
-// Members List Data (Preseeded)
+// Members List Data
 const membersData = [
   { id: 1, code: 'M#01', nameEn: 'Ganesh (Admin)', nameKn: 'ಗಣೇಶ್ (ಅಡ್ಮಿನ್)', phone: '9876543210', role: 'Admin', status: 'Active' },
   { id: 2, code: 'M#02', nameEn: 'Ramesh', nameKn: 'ರಮೇಶ್', phone: '9876543211', role: 'Member', status: 'Active' },
@@ -168,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Fetch Live Data from Express API & MSSQL Server
 async function fetchLiveDataFromBackend() {
   try {
-    const resSummary = await fetch('http://localhost:5000/api/summary');
+    const resSummary = await fetch(`${API_BASE_URL}/summary`);
     if (resSummary.ok) {
       const data = await resSummary.json();
       totalSavingsVal = data.totalSavings || 90000;
@@ -182,7 +187,7 @@ async function fetchLiveDataFromBackend() {
       });
     }
 
-    const resMembers = await fetch('http://localhost:5000/api/members');
+    const resMembers = await fetch(`${API_BASE_URL}/members`);
     if (resMembers.ok) {
       const apiMems = await resMembers.json();
       if (apiMems && apiMems.length > 0) {
@@ -203,17 +208,16 @@ async function fetchLiveDataFromBackend() {
       }
     }
   } catch (err) {
-    console.log('Using local client state (Backend API on http://localhost:5000)');
+    console.log('Using local client state (API connection active)');
   }
 }
 
 // Toggle Language Engine
 function toggleLanguage() {
   currentLang = (currentLang === 'en') ? 'kn' : 'en';
-  const labelBtn = document.getElementById('langBtnText');
-  if (labelBtn) {
-    labelBtn.textContent = (currentLang === 'en') ? 'ಕನ್ನಡ' : 'English';
-  }
+  document.querySelectorAll('.lang-btn-text').forEach(btn => {
+    btn.textContent = (currentLang === 'en') ? 'ಕನ್ನಡ' : 'English';
+  });
   updateI18nText();
   renderMembersList();
   renderExpensesList('all');
@@ -229,7 +233,6 @@ function updateI18nText() {
   });
 }
 
-// Quick Demo Login Fill
 function fillDemoLogin(phone, pwd) {
   document.getElementById('loginPhone').value = phone;
   document.getElementById('loginPassword').value = pwd;
@@ -242,7 +245,7 @@ async function handleLoginSubmit(event) {
   const password = document.getElementById('loginPassword').value;
 
   try {
-    const res = await fetch('http://localhost:5000/api/login', {
+    const res = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, password })
@@ -258,7 +261,6 @@ async function handleLoginSubmit(event) {
       alert(result.message || 'Invalid Login Details');
     }
   } catch (err) {
-    // Local fallback login check
     const localUser = membersData.find(m => m.phone === phone);
     if (localUser) {
       if (localUser.status === 'Inactive') {
@@ -275,7 +277,7 @@ async function handleLoginSubmit(event) {
   }
 }
 
-// Apply Logged-in User Session (Show/Hide Admin Action Controls)
+// Apply Logged-in User Session
 function applyUserSession() {
   const greeting = document.getElementById('userGreetingText');
   const banner = document.getElementById('adminModeBanner');
@@ -297,7 +299,6 @@ function applyUserSession() {
   renderMembersList();
 }
 
-// Logout Handler
 function handleLogout() {
   currentUser = null;
   const banner = document.getElementById('adminModeBanner');
@@ -307,7 +308,6 @@ function handleLogout() {
   navigateTo('splash');
 }
 
-// Populate Member Dropdowns for Modals
 function populateMemberDropdowns() {
   const selPwd = document.getElementById('pwdMemberSelect');
   const selDraw = document.getElementById('drawMemberSelect');
@@ -349,7 +349,7 @@ function navigateTo(screenId) {
   if (container) container.scrollTop = 0;
 }
 
-// Render Members List with Admin Deactivate / Reactivate Action
+// Render Members List
 function renderMembersList() {
   const listEl = document.getElementById('membersContainer');
   if (!listEl) return;
@@ -389,17 +389,15 @@ function renderMembersList() {
   }).join('');
 }
 
-// Toggle Deactivate / Reactivate Member (Soft Status Toggle - No Data Loss)
+// Toggle Deactivate / Reactivate Member
 async function toggleMemberStatus(memberId, newStatus) {
   try {
-    await fetch(`http://localhost:5000/api/members/${memberId}/status`, {
+    await fetch(`${API_BASE_URL}/members/${memberId}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus })
     });
-  } catch (err) {
-    console.warn(err.message);
-  }
+  } catch (err) { console.warn(err.message); }
 
   const mem = membersData.find(m => m.id === memberId);
   if (mem) mem.status = newStatus;
@@ -408,7 +406,7 @@ async function toggleMemberStatus(memberId, newStatus) {
   alert(currentLang === 'kn' ? `ಸದಸ್ಯರ ಸ್ಥಿತಿ ಬದಲಾಗಿದೆ: ${newStatus}` : `Member status updated to ${newStatus}`);
 }
 
-// Admin Add Member Submission Handler
+// Admin Add Member
 async function handleAddMemberSubmit(event) {
   event.preventDefault();
   const nameEn = document.getElementById('memNameEn').value;
@@ -417,7 +415,7 @@ async function handleAddMemberSubmit(event) {
   const role = document.getElementById('memRole').value;
 
   try {
-    await fetch('http://localhost:5000/api/members', {
+    await fetch(`${API_BASE_URL}/members`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name_en: nameEn, name_kn: nameKn, phone, role, password: '1234' })
@@ -441,14 +439,14 @@ async function handleAddMemberSubmit(event) {
   alert(currentLang === 'kn' ? 'ಹೊಸ ಸದಸ್ಯ ಯಶಸ್ವಿಯಾಗಿ ಸೇರ್ಪಡೆಯಾಗಿದ್ದಾರೆ!' : 'New member added successfully!');
 }
 
-// Admin Change Password Handler
+// Admin Change Password
 async function handleChangePasswordSubmit(event) {
   event.preventDefault();
   const memberId = document.getElementById('pwdMemberSelect').value;
   const newPassword = document.getElementById('newPasswordInput').value;
 
   try {
-    await fetch('http://localhost:5000/api/change-password', {
+    await fetch(`${API_BASE_URL}/change-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ memberId, newPassword })
@@ -459,7 +457,7 @@ async function handleChangePasswordSubmit(event) {
   alert(currentLang === 'kn' ? 'ಪಾಸ್‌ವರ್ಡ್ ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ!' : 'Password updated successfully!');
 }
 
-// Admin Conduct Winner Draw Handler
+// Admin Conduct Winner Draw
 async function handleConductDrawSubmit(event) {
   event.preventDefault();
   const monthYear = document.getElementById('drawMonthYear').value;
@@ -467,7 +465,7 @@ async function handleConductDrawSubmit(event) {
   const amountWon = parseInt(document.getElementById('drawAmountWon').value, 10);
 
   try {
-    await fetch('http://localhost:5000/api/payouts', {
+    await fetch(`${API_BASE_URL}/payouts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ memberId, monthYear, amountWon, paymentMethod: 'UPI' })
@@ -560,7 +558,7 @@ async function handleAddExpenseSubmit(event) {
   };
 
   try {
-    await fetch('http://localhost:5000/api/expenses', {
+    await fetch(`${API_BASE_URL}/expenses`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -591,9 +589,9 @@ function toggleDeviceView() {
   if (wrapper) {
     wrapper.classList.toggle('desktop-mode');
     if (wrapper.classList.contains('desktop-mode')) {
-      btn.innerHTML = '📱 Mobile View';
+      if (btn) btn.innerHTML = '📱 Mobile View';
     } else {
-      btn.innerHTML = '🖥️ Desktop View';
+      if (btn) btn.innerHTML = '🖥️ Desktop View';
     }
   }
 }
