@@ -1,8 +1,8 @@
 // ============================================================
-// Ganesha Cheeti (ಗಣೇಶ ಚೀಟಿ) - Core Mobile App Logic & i18n
+// Ganesha Cheeti (ಗಣೇಶ ಚೀಟಿ) - Native Mobile App Engine & UI Utils
 // ============================================================
 
-// Base API URL (Relative path for Vercel deployment & local proxy)
+// Relative API Base URL for Vercel deployment and local dev
 const API_BASE_URL = window.location.origin.includes('localhost:3000') 
   ? 'http://localhost:5000/api' 
   : '/api';
@@ -162,7 +162,7 @@ const expensesData = [
   { id: 5, titleEn: "Miscellaneous", titleKn: "ಇತರ ಖರ್ಚುಗಳು", date: "10 May 2025", category: "other", amount: 1200 }
 ];
 
-// DOM Load Initialization
+// DOM Initialization
 document.addEventListener('DOMContentLoaded', () => {
   fetchLiveDataFromBackend();
   renderMembersList();
@@ -170,7 +170,41 @@ document.addEventListener('DOMContentLoaded', () => {
   updateI18nText();
 });
 
-// Fetch Live Data from Express API & MSSQL Server
+// --- CUSTOM MOBILE TOAST NOTIFICATION ENGINE (REPLACES BROWSER ALERTS) ---
+function showToast(message, type = 'success', duration = 3000) {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast-message toast-${type}`;
+  
+  const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+  toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+  
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(10px)';
+    toast.style.transition = 'all 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+// --- FULLSCREEN SPINNER UTILITIES ---
+function showSpinner(text = 'Processing...') {
+  const overlay = document.getElementById('appSpinner');
+  const txt = document.getElementById('spinnerText');
+  if (txt) txt.textContent = text;
+  if (overlay) overlay.classList.add('active');
+}
+
+function hideSpinner() {
+  const overlay = document.getElementById('appSpinner');
+  if (overlay) overlay.classList.remove('active');
+}
+
+// Fetch Live Data
 async function fetchLiveDataFromBackend() {
   try {
     const resSummary = await fetch(`${API_BASE_URL}/summary`);
@@ -221,6 +255,7 @@ function toggleLanguage() {
   updateI18nText();
   renderMembersList();
   renderExpensesList('all');
+  if (currentUser) populateProfileModal();
 }
 
 function updateI18nText() {
@@ -233,9 +268,40 @@ function updateI18nText() {
   });
 }
 
-function fillDemoLogin(phone, pwd) {
+// Password Visibility Eye Toggle
+function togglePasswordVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input) {
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.textContent = '🙈';
+    } else {
+      input.type = 'password';
+      btn.textContent = '👁️';
+    }
+  }
+}
+
+// Quick Demo Fill with Admin Checkbox Sync
+function fillDemoLogin(phone, pwd, isAdmin = false) {
   document.getElementById('loginPhone').value = phone;
   document.getElementById('loginPassword').value = pwd;
+  const chk = document.getElementById('chkAdminRole');
+  if (chk) {
+    chk.checked = isAdmin;
+    handleAdminCheckboxToggle(chk);
+  }
+}
+
+function handleAdminCheckboxToggle(chk) {
+  const wrapper = chk.closest('.checkbox-admin-wrapper');
+  if (wrapper) {
+    if (chk.checked) {
+      wrapper.classList.add('checked');
+    } else {
+      wrapper.classList.remove('checked');
+    }
+  }
 }
 
 // Login Submission Handler
@@ -243,6 +309,9 @@ async function handleLoginSubmit(event) {
   event.preventDefault();
   const phone = document.getElementById('loginPhone').value;
   const password = document.getElementById('loginPassword').value;
+  const isAdminChecked = document.getElementById('chkAdminRole').checked;
+
+  showSpinner(currentLang === 'kn' ? 'ಲಾಗಿನ್ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...' : 'Verifying Credentials...');
 
   try {
     const res = await fetch(`${API_BASE_URL}/login`, {
@@ -251,41 +320,50 @@ async function handleLoginSubmit(event) {
       body: JSON.stringify({ phone, password })
     });
     const result = await res.json();
+    hideSpinner();
 
     if (res.ok && result.success) {
       currentUser = result.user;
+      if (isAdminChecked) currentUser.Role = 'Admin';
       applyUserSession();
-      alert(currentLang === 'kn' ? `ಸ್ವಾಗತ ${currentUser.Name_KN || currentUser.Name_EN}!` : `Welcome ${currentUser.Name_EN}!`);
+      showToast(currentLang === 'kn' ? `ಸ್ವಾಗತ ${currentUser.Name_KN || currentUser.Name_EN}!` : `Welcome ${currentUser.Name_EN}!`, 'success');
       navigateTo('dashboard');
     } else {
-      alert(result.message || 'Invalid Login Details');
+      showToast(result.message || 'Invalid Login Details', 'error');
     }
   } catch (err) {
+    hideSpinner();
     const localUser = membersData.find(m => m.phone === phone);
     if (localUser) {
       if (localUser.status === 'Inactive') {
-        alert('Your account is inactive. Please contact Admin.');
+        showToast('Your account is inactive. Please contact Admin.', 'error');
         return;
       }
-      currentUser = { MemberID: localUser.id, Name_EN: localUser.nameEn, Name_KN: localUser.nameKn, Role: localUser.role };
+      currentUser = { MemberID: localUser.id, Name_EN: localUser.nameEn, Name_KN: localUser.nameKn, Role: isAdminChecked ? 'Admin' : localUser.role, Phone: localUser.phone, Code: localUser.code };
       applyUserSession();
-      alert(`Welcome ${currentUser.Name_EN}!`);
+      showToast(`Welcome ${currentUser.Name_EN}!`, 'success');
       navigateTo('dashboard');
     } else {
-      alert('Invalid Phone Number or Password');
+      showToast('Invalid Phone Number or Password', 'error');
     }
   }
 }
 
-// Apply Logged-in User Session
+// User Session & Profile Setup
 function applyUserSession() {
   const greeting = document.getElementById('userGreetingText');
   const banner = document.getElementById('adminModeBanner');
   const adminBtns = document.querySelectorAll('.admin-only-btn');
+  const headerAvatar = document.getElementById('userAvatarHeader');
 
   if (currentUser) {
     const name = (currentLang === 'kn') ? (currentUser.Name_KN || currentUser.Name_EN) : currentUser.Name_EN;
     if (greeting) greeting.textContent = (currentLang === 'kn') ? `ನಮಸ್ಕಾರ, ${name}!` : `Welcome, ${name}!`;
+
+    if (headerAvatar) {
+      headerAvatar.textContent = currentUser.Name_EN.charAt(0);
+      headerAvatar.style.fontWeight = 'bold';
+    }
 
     if (currentUser.Role === 'Admin') {
       if (banner) banner.style.display = 'flex';
@@ -294,9 +372,25 @@ function applyUserSession() {
       if (banner) banner.style.display = 'none';
       adminBtns.forEach(b => b.style.display = 'none');
     }
+    populateProfileModal();
   }
   populateMemberDropdowns();
   renderMembersList();
+}
+
+function populateProfileModal() {
+  if (!currentUser) return;
+  const nameEl = document.getElementById('profileName');
+  const codeEl = document.getElementById('profileCode');
+  const phoneEl = document.getElementById('profilePhone');
+  const avatarEl = document.getElementById('profileAvatarLg');
+  const roleEl = document.getElementById('profileRoleBadge');
+
+  if (nameEl) nameEl.textContent = (currentLang === 'kn') ? (currentUser.Name_KN || currentUser.Name_EN) : currentUser.Name_EN;
+  if (codeEl) codeEl.textContent = currentUser.MemberCode || `M#0${currentUser.MemberID || 1}`;
+  if (phoneEl) phoneEl.textContent = currentUser.Phone || '9876543210';
+  if (avatarEl) avatarEl.textContent = currentUser.Name_EN.charAt(0);
+  if (roleEl) roleEl.textContent = currentUser.Role === 'Admin' ? 'Admin & Member' : 'Member';
 }
 
 function handleLogout() {
@@ -304,7 +398,7 @@ function handleLogout() {
   const banner = document.getElementById('adminModeBanner');
   if (banner) banner.style.display = 'none';
   document.querySelectorAll('.admin-only-btn').forEach(b => b.style.display = 'none');
-  alert(currentLang === 'kn' ? 'ಯಶಸ್ವಿಯಾಗಿ ಲಾಗ್‌ಔಟ್ ಆಗಿದೆ' : 'Logged out successfully');
+  showToast(currentLang === 'kn' ? 'ಯಶಸ್ವಿಯಾಗಿ ಲಾಗ್‌ಔಟ್ ಆಗಿದೆ' : 'Logged out successfully', 'info');
   navigateTo('splash');
 }
 
@@ -389,8 +483,9 @@ function renderMembersList() {
   }).join('');
 }
 
-// Toggle Deactivate / Reactivate Member
+// Toggle Member Deactivation
 async function toggleMemberStatus(memberId, newStatus) {
+  showSpinner('Updating Member...');
   try {
     await fetch(`${API_BASE_URL}/members/${memberId}/status`, {
       method: 'PATCH',
@@ -398,12 +493,13 @@ async function toggleMemberStatus(memberId, newStatus) {
       body: JSON.stringify({ status: newStatus })
     });
   } catch (err) { console.warn(err.message); }
+  hideSpinner();
 
   const mem = membersData.find(m => m.id === memberId);
   if (mem) mem.status = newStatus;
 
   renderMembersList();
-  alert(currentLang === 'kn' ? `ಸದಸ್ಯರ ಸ್ಥಿತಿ ಬದಲಾಗಿದೆ: ${newStatus}` : `Member status updated to ${newStatus}`);
+  showToast(currentLang === 'kn' ? `ಸದಸ್ಯರ ಸ್ಥಿತಿ ಬದಲಾಗಿದೆ: ${newStatus}` : `Member status updated to ${newStatus}`, 'info');
 }
 
 // Admin Add Member
@@ -414,6 +510,7 @@ async function handleAddMemberSubmit(event) {
   const phone = document.getElementById('memPhone').value;
   const role = document.getElementById('memRole').value;
 
+  showSpinner('Adding Member...');
   try {
     await fetch(`${API_BASE_URL}/members`, {
       method: 'POST',
@@ -421,6 +518,7 @@ async function handleAddMemberSubmit(event) {
       body: JSON.stringify({ name_en: nameEn, name_kn: nameKn, phone, role, password: '1234' })
     });
   } catch (err) { console.warn(err.message); }
+  hideSpinner();
 
   const newMem = {
     id: membersData.length + 1,
@@ -436,7 +534,7 @@ async function handleAddMemberSubmit(event) {
   renderMembersList();
   populateMemberDropdowns();
   closeModal('modalAddMember');
-  alert(currentLang === 'kn' ? 'ಹೊಸ ಸದಸ್ಯ ಯಶಸ್ವಿಯಾಗಿ ಸೇರ್ಪಡೆಯಾಗಿದ್ದಾರೆ!' : 'New member added successfully!');
+  showToast(currentLang === 'kn' ? 'ಹೊಸ ಸದಸ್ಯ ಯಶಸ್ವಿಯಾಗಿ ಸೇರ್ಪಡೆಯಾಗಿದ್ದಾರೆ!' : 'New member added successfully!', 'success');
 }
 
 // Admin Change Password
@@ -445,6 +543,7 @@ async function handleChangePasswordSubmit(event) {
   const memberId = document.getElementById('pwdMemberSelect').value;
   const newPassword = document.getElementById('newPasswordInput').value;
 
+  showSpinner('Updating Password...');
   try {
     await fetch(`${API_BASE_URL}/change-password`, {
       method: 'POST',
@@ -452,9 +551,10 @@ async function handleChangePasswordSubmit(event) {
       body: JSON.stringify({ memberId, newPassword })
     });
   } catch (err) { console.warn(err.message); }
+  hideSpinner();
 
   closeModal('modalChangePassword');
-  alert(currentLang === 'kn' ? 'ಪಾಸ್‌ವರ್ಡ್ ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ!' : 'Password updated successfully!');
+  showToast(currentLang === 'kn' ? 'ಪಾಸ್‌ವರ್ಡ್ ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ!' : 'Password updated successfully!', 'success');
 }
 
 // Admin Conduct Winner Draw
@@ -464,6 +564,7 @@ async function handleConductDrawSubmit(event) {
   const memberId = document.getElementById('drawMemberSelect').value;
   const amountWon = parseInt(document.getElementById('drawAmountWon').value, 10);
 
+  showSpinner('Recording Draw Winner...');
   try {
     await fetch(`${API_BASE_URL}/payouts`, {
       method: 'POST',
@@ -471,9 +572,10 @@ async function handleConductDrawSubmit(event) {
       body: JSON.stringify({ memberId, monthYear, amountWon, paymentMethod: 'UPI' })
     });
   } catch (err) { console.warn(err.message); }
+  hideSpinner();
 
   closeModal('modalConductDraw');
-  alert(currentLang === 'kn' ? `ಚೀಟಿ ವಿಜೇತ ಯಶಸ್ವಿಯಾಗಿ ದಾಖಲಾಗಿದ್ದಾರೆ!` : `Chit draw winner recorded successfully!`);
+  showToast(currentLang === 'kn' ? `ಚೀಟಿ ವಿಜೇತ ಯಶಸ್ವಿಯಾಗಿ ದಾಖಲಾಗಿದ್ದಾರೆ!` : `Chit draw winner recorded successfully!`, 'success');
   navigateTo('payouts');
 }
 
@@ -537,7 +639,7 @@ function handleContributionSubmit(event) {
     el.textContent = `₹ ${totalSavingsVal.toLocaleString()}`;
   });
 
-  alert(currentLang === 'kn' ? 'ನಿಮ್ಮ ಕೊಡುಗೆ ಯಶಸ್ವಿಯಾಗಿ ಸಲ್ಲಿಕೆಯಾಗಿದೆ!' : 'Your contribution has been recorded successfully!');
+  showToast(currentLang === 'kn' ? 'ನಿಮ್ಮ ಕೊಡುಗೆ ಯಶಸ್ವಿಯಾಗಿ ಸಲ್ಲಿಕೆಯಾಗಿದೆ!' : 'Your contribution has been recorded successfully!', 'success');
   navigateTo('dashboard');
 }
 
@@ -548,15 +650,7 @@ async function handleAddExpenseSubmit(event) {
   const amount = parseInt(document.getElementById('expAmount').value, 10);
   const category = document.getElementById('expCategory').value;
 
-  const newExp = {
-    id: expensesData.length + 1,
-    titleEn,
-    titleKn,
-    date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-    category,
-    amount
-  };
-
+  showSpinner('Saving Expense...');
   try {
     await fetch(`${API_BASE_URL}/expenses`, {
       method: 'POST',
@@ -570,6 +664,16 @@ async function handleAddExpenseSubmit(event) {
       })
     });
   } catch (err) { console.warn(err.message); }
+  hideSpinner();
+
+  const newExp = {
+    id: expensesData.length + 1,
+    titleEn,
+    titleKn,
+    date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+    category,
+    amount
+  };
 
   expensesData.unshift(newExp);
   totalExpensesVal += amount;
@@ -580,7 +684,7 @@ async function handleAddExpenseSubmit(event) {
 
   renderExpensesList('all');
   closeModal('modalAddExpense');
-  alert(currentLang === 'kn' ? 'ಖರ್ಚು ಯಶಸ್ವಿಯಾಗಿ ಲೈವ್ ಡಾಟಾಬೇಸ್‌ನಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ!' : 'New expense saved to live MSSQL database!');
+  showToast(currentLang === 'kn' ? 'ಖರ್ಚು ಯಶಸ್ವಿಯಾಗಿ ಲೈವ್ ಡಾಟಾಬೇಸ್‌ನಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ!' : 'New expense saved to live MSSQL database!', 'success');
 }
 
 function toggleDeviceView() {
