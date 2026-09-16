@@ -7,10 +7,20 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+// Normalize request URLs (strips /api prefix if Vercel serverless proxy passes /login or /api/login)
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api/')) {
+    req.url = req.url.substring(4);
+  } else if (req.url === '/api') {
+    req.url = '/';
+  }
+  next();
+});
+
 // ============================================================
 // 1. GLOBAL SETTINGS & CHEETICYCLES ENDPOINTS (dbo.CheetiCycles & dbo.AppSettings)
 // ============================================================
-app.get('/api/settings', async (req, res) => {
+app.get(['/settings', '/api/settings'], async (req, res) => {
   try {
     const pool = await getPool();
     if (!pool) return res.status(503).json({ error: 'MSSQL Database connection unavailable' });
@@ -68,7 +78,7 @@ app.get('/api/settings', async (req, res) => {
   }
 });
 
-app.post('/api/settings', async (req, res) => {
+app.post(['/settings', '/api/settings'], async (req, res) => {
   try {
     const pool = await getPool();
     if (!pool) return res.status(503).json({ error: 'MSSQL Database connection unavailable' });
@@ -137,7 +147,7 @@ app.post('/api/settings', async (req, res) => {
 // ============================================================
 // 2. EXPENSE CATEGORIES ENDPOINTS (dbo.ExpenseCategories)
 // ============================================================
-app.get('/api/categories', async (req, res) => {
+app.get(['/categories', '/api/categories'], async (req, res) => {
   try {
     const pool = await getPool();
     if (!pool) return res.status(503).json({ error: 'MSSQL Database connection unavailable' });
@@ -175,7 +185,7 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
-app.post('/api/categories', async (req, res) => {
+app.post(['/categories', '/api/categories'], async (req, res) => {
   try {
     const pool = await getPool();
     if (!pool) return res.status(503).json({ error: 'MSSQL Database connection unavailable' });
@@ -221,7 +231,7 @@ app.post('/api/categories', async (req, res) => {
 // ============================================================
 // 3. MEMBERS ENDPOINTS (dbo.Members)
 // ============================================================
-app.get('/api/members', async (req, res) => {
+app.get(['/members', '/api/members'], async (req, res) => {
   try {
     const pool = await getPool();
     if (!pool) return res.status(503).json({ error: 'MSSQL Database connection unavailable' });
@@ -233,7 +243,7 @@ app.get('/api/members', async (req, res) => {
   }
 });
 
-app.post('/api/members', async (req, res) => {
+app.post(['/members', '/api/members'], async (req, res) => {
   const { name_en, name_kn, phone, role, password } = req.body;
   try {
     const pool = await getPool();
@@ -257,7 +267,7 @@ app.post('/api/members', async (req, res) => {
   }
 });
 
-app.patch('/api/members/:id/status', async (req, res) => {
+app.patch(['/members/:id/status', '/api/members/:id/status'], async (req, res) => {
   const memberId = parseInt(req.params.id, 10);
   const { status } = req.body;
   try {
@@ -275,7 +285,7 @@ app.patch('/api/members/:id/status', async (req, res) => {
   }
 });
 
-app.put('/api/members/:id', async (req, res) => {
+app.put(['/members/:id', '/api/members/:id'], async (req, res) => {
   const memberId = parseInt(req.params.id, 10);
   const { name_en, name_kn, phone, role, status } = req.body;
   try {
@@ -301,10 +311,10 @@ app.put('/api/members/:id', async (req, res) => {
   }
 });
 
-
-// AUTH LOGIN
-app.post('/api/login', async (req, res) => {
-  const { phone, password } = req.body;
+// AUTH LOGIN (Matches RTRIM/LTRIM for both Phone and Password)
+app.post(['/login', '/api/login'], async (req, res) => {
+  const phone = (req.body.phone || '').toString().trim();
+  const password = (req.body.password || '').toString().trim();
   try {
     const pool = await getPool();
     if (!pool) return res.status(503).json({ error: 'MSSQL Database connection unavailable' });
@@ -312,7 +322,7 @@ app.post('/api/login', async (req, res) => {
     const result = await pool.request()
       .input('phone', sql.NVarChar, phone)
       .input('password', sql.NVarChar, password)
-      .query('SELECT MemberID, MemberCode, Name_EN, Name_KN, Phone, Role, Status FROM dbo.Members WHERE Phone = @phone AND Password = @password');
+      .query('SELECT MemberID, MemberCode, Name_EN, Name_KN, Phone, Role, Status FROM dbo.Members WHERE RTRIM(LTRIM(Phone)) = RTRIM(LTRIM(@phone)) AND RTRIM(LTRIM(Password)) = RTRIM(LTRIM(@password))');
 
     if (result.recordset && result.recordset.length > 0) {
       const user = result.recordset[0];
@@ -327,7 +337,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 // CHANGE PASSWORD
-app.post('/api/change-password', async (req, res) => {
+app.post(['/change-password', '/api/change-password'], async (req, res) => {
   const { memberId, newPassword } = req.body;
   try {
     const pool = await getPool();
@@ -335,7 +345,7 @@ app.post('/api/change-password', async (req, res) => {
 
     await pool.request()
       .input('memberId', sql.Int, memberId)
-      .input('newPassword', sql.NVarChar, newPassword)
+      .input('newPassword', sql.NVarChar, (newPassword || '').toString().trim())
       .query('UPDATE dbo.Members SET Password = @newPassword WHERE MemberID = @memberId');
 
     res.json({ success: true, message: 'Password updated' });
@@ -347,7 +357,7 @@ app.post('/api/change-password', async (req, res) => {
 // ============================================================
 // 4. CONTRIBUTIONS ENDPOINTS (dbo.Contributions)
 // ============================================================
-app.get('/api/contributions', async (req, res) => {
+app.get(['/contributions', '/api/contributions'], async (req, res) => {
   try {
     const pool = await getPool();
     if (!pool) return res.status(503).json({ error: 'MSSQL Database connection unavailable' });
@@ -364,7 +374,7 @@ app.get('/api/contributions', async (req, res) => {
   }
 });
 
-app.post('/api/contributions', async (req, res) => {
+app.post(['/contributions', '/api/contributions'], async (req, res) => {
   const { memberId, monthYear, amount, paymentMethod, transactionRef, status } = req.body;
   try {
     const pool = await getPool();
@@ -379,7 +389,7 @@ app.post('/api/contributions', async (req, res) => {
       .input('status', sql.NVarChar, status || 'Pending Approval')
       .query(`
         INSERT INTO dbo.Contributions (MemberID, MonthYear, DueDate, Amount, PaymentMethod, TransactionRef, Status, PaidDate)
-        VALUES (@memberId, @monthYear, GETDATE(), @amount, @paymentMethod, @transactionRef, @status, CASE WHEN @status = 'Paid' THEN GETDATE() ELSE NULL END);
+        VALUES (@memberId, @monthYear, GETDATE(), @amount, @paymentMethod, @transactionRef, @status, CASE WHEN @status = 'Paid' OR @status = 'Approved' THEN GETDATE() ELSE NULL END);
       `);
 
     res.status(201).json({ success: true });
@@ -388,7 +398,7 @@ app.post('/api/contributions', async (req, res) => {
   }
 });
 
-app.patch('/api/contributions/:id/status', async (req, res) => {
+app.patch(['/contributions/:id/status', '/api/contributions/:id/status'], async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const { status, rejectionReason, transactionRef } = req.body;
   try {
@@ -402,7 +412,7 @@ app.patch('/api/contributions/:id/status', async (req, res) => {
       .query(`
         UPDATE dbo.Contributions 
         SET Status = @status, 
-            PaidDate = CASE WHEN @status = 'Paid' THEN GETDATE() ELSE PaidDate END,
+            PaidDate = CASE WHEN @status = 'Paid' OR @status = 'Approved' THEN GETDATE() ELSE PaidDate END,
             TransactionRef = CASE WHEN @ref <> '' THEN @ref ELSE TransactionRef END
         WHERE ContributionID = @id
       `);
@@ -416,7 +426,7 @@ app.patch('/api/contributions/:id/status', async (req, res) => {
 // ============================================================
 // 5. EXPENSES ENDPOINTS (dbo.Expenses)
 // ============================================================
-app.get('/api/expenses', async (req, res) => {
+app.get(['/expenses', '/api/expenses'], async (req, res) => {
   try {
     const pool = await getPool();
     if (!pool) return res.status(503).json({ error: 'MSSQL Database connection unavailable' });
@@ -428,7 +438,7 @@ app.get('/api/expenses', async (req, res) => {
   }
 });
 
-app.post('/api/expenses', async (req, res) => {
+app.post(['/expenses', '/api/expenses'], async (req, res) => {
   const { title_en, title_kn, category, amount, expenseDate } = req.body;
   try {
     const pool = await getPool();
@@ -448,7 +458,7 @@ app.post('/api/expenses', async (req, res) => {
   }
 });
 
-app.delete('/api/expenses/:id', async (req, res) => {
+app.delete(['/expenses/:id', '/api/expenses/:id'], async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
     const pool = await getPool();
@@ -464,7 +474,7 @@ app.delete('/api/expenses/:id', async (req, res) => {
 // ============================================================
 // 6. LOANS ENDPOINTS (dbo.Loans)
 // ============================================================
-app.get('/api/loans', async (req, res) => {
+app.get(['/loans', '/api/loans'], async (req, res) => {
   try {
     const pool = await getPool();
     if (!pool) return res.status(503).json({ error: 'MSSQL Database connection unavailable' });
@@ -481,7 +491,7 @@ app.get('/api/loans', async (req, res) => {
   }
 });
 
-app.post('/api/loans', async (req, res) => {
+app.post(['/loans', '/api/loans'], async (req, res) => {
   const { memberId, principalAmount } = req.body;
   try {
     const pool = await getPool();
@@ -511,7 +521,7 @@ app.post('/api/loans', async (req, res) => {
 // ============================================================
 // 7. PAYOUTS ENDPOINTS (dbo.Payouts)
 // ============================================================
-app.get('/api/payouts', async (req, res) => {
+app.get(['/payouts', '/api/payouts'], async (req, res) => {
   try {
     const pool = await getPool();
     if (!pool) return res.status(503).json({ error: 'MSSQL Database connection unavailable' });
@@ -528,7 +538,7 @@ app.get('/api/payouts', async (req, res) => {
   }
 });
 
-app.post('/api/payouts', async (req, res) => {
+app.post(['/payouts', '/api/payouts'], async (req, res) => {
   const { memberId, monthYear, amountWon, paymentMethod } = req.body;
   try {
     const pool = await getPool();
@@ -551,7 +561,7 @@ app.post('/api/payouts', async (req, res) => {
 // ============================================================
 // 8. NOTIFICATIONS ENDPOINTS (dbo.Notifications)
 // ============================================================
-app.get('/api/notifications', async (req, res) => {
+app.get(['/notifications', '/api/notifications'], async (req, res) => {
   try {
     const pool = await getPool();
     if (!pool) return res.status(503).json({ error: 'MSSQL Database connection unavailable' });
@@ -577,7 +587,7 @@ app.get('/api/notifications', async (req, res) => {
   }
 });
 
-app.post('/api/notifications', async (req, res) => {
+app.post(['/notifications', '/api/notifications'], async (req, res) => {
   const { title, body, type } = req.body;
   try {
     const pool = await getPool();
@@ -612,14 +622,14 @@ app.post('/api/notifications', async (req, res) => {
 // ============================================================
 // 9. SUMMARY AGGREGATION ENDPOINT
 // ============================================================
-app.get('/api/summary', async (req, res) => {
+app.get(['/summary', '/api/summary'], async (req, res) => {
   try {
     const pool = await getPool();
     if (!pool) return res.status(503).json({ error: 'MSSQL Database connection unavailable' });
 
     const result = await pool.request().query(`
       SELECT 
-        (SELECT ISNULL(SUM(Amount), 90000) FROM dbo.Contributions WHERE Status = 'Paid') AS TotalSavings,
+        (SELECT ISNULL(SUM(Amount), 90000) FROM dbo.Contributions WHERE Status = 'Paid' OR Status = 'Approved') AS TotalSavings,
         (SELECT COUNT(*) FROM dbo.Members WHERE Status='Active') AS TotalMembers,
         (SELECT ISNULL(SUM(Amount), 8450) FROM dbo.Expenses) AS TotalExpenses,
         (SELECT ISNULL(SUM(TotalInterestCollected), 4500) FROM dbo.Loans) AS TotalInterest

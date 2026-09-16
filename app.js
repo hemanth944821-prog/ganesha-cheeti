@@ -465,8 +465,8 @@ function handleAdminCheckboxToggle(chk) {
 // Login Submission Handler
 async function handleLoginSubmit(event) {
   event.preventDefault();
-  const phone = document.getElementById('loginPhone').value;
-  const password = document.getElementById('loginPassword').value;
+  const phone = (document.getElementById('loginPhone').value || '').trim();
+  const password = (document.getElementById('loginPassword').value || '').trim();
   const isAdminChecked = document.getElementById('chkAdminRole').checked;
 
   showSpinner(currentLang === 'kn' ? 'ಲಾಗಿನ್ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...' : 'Verifying Credentials...');
@@ -487,25 +487,14 @@ async function handleLoginSubmit(event) {
       showToast(currentLang === 'kn' ? `ಸ್ವಾಗತ ${currentUser.Name_KN || currentUser.Name_EN}!` : `Welcome ${currentUser.Name_EN}!`, 'success');
       navigateTo('dashboard');
     } else {
-      showToast(result.message || 'Invalid Login Details', 'error');
+      showToast(result.message || (currentLang === 'kn' ? 'ಅಮಾನ್ಯ ಫೋನ್ ಸಂಖ್ಯೆ ಅಥವಾ ಪಾಸ್‌ವರ್ಡ್' : 'Invalid Phone Number or Password'), 'error');
     }
   } catch (err) {
     hideSpinner();
-    const localUser = membersData.find(m => m.phone === phone);
-    if (localUser) {
-      if (localUser.status === 'Inactive') {
-        showToast('Your account is inactive. Please contact Admin.', 'error');
-        return;
-      }
-      currentUser = { MemberID: localUser.id, Name_EN: localUser.nameEn, Name_KN: localUser.nameKn, Role: isAdminChecked ? 'Admin' : localUser.role, Phone: localUser.phone, Code: localUser.code };
-      applyUserSession();
-      showToast(`Welcome ${currentUser.Name_EN}!`, 'success');
-      navigateTo('dashboard');
-    } else {
-      showToast('Invalid Phone Number or Password', 'error');
-    }
+    showToast(currentLang === 'kn' ? 'ಲಾಗಿನ್ ದೋಷ. ದಯವಿಟ್ಟು ನಂತರ ಪ್ರಯತ್ನಿಸಿ.' : 'Login Connection Error. Please try again.', 'error');
   }
 }
+
 
 // User Session & Profile Setup
 function applyUserSession() {
