@@ -164,15 +164,17 @@
           </div>
 
           <!-- Admin Mode Indicator Banner -->
-          <div id="adminModeBanner" style="display:none; background: #991B1B; color: white; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
-            <span>👑 Admin Control Active (ಗಣೇಶ್ - ಅಡ್ಮಿನ್)</span>
-            <div style="display:flex; gap:6px; flex-wrap: wrap;">
-              <button class="chip-tab" style="background: #10B981; color: white; padding: 4px 10px; font-size: 11px; font-weight: 700;" onclick="renderAdminPendingApprovalsModal()">✅ Approvals <span id="pendingApprovalsBadgeCount" style="background:#EF4444; color:white; padding:1px 6px; border-radius:10px; font-size:10px;">1</span></button>
-              <button class="chip-tab" style="background: #0D9488; color: white; padding: 4px 10px; font-size: 11px; font-weight: 700;" onclick="openManageCategoriesModal()">⚙️ Categories</button>
-              <button class="chip-tab" style="background: #2563EB; color: white; padding: 4px 10px; font-size: 11px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" onclick="testAdminPushNotification()">🔔 Test Push Notif</button>
-              <button class="chip-tab" style="background: #F59E0B; color: white; padding: 4px 10px; font-size: 11px;" onclick="openModal('modalSendNotification')">📢 Alert Members</button>
-              <button class="chip-tab" style="background: white; color: #991B1B; padding: 4px 10px; font-size: 11px;" onclick="openModal('modalChangePassword')">Password</button>
+          <div id="adminModeBanner" style="display:none; background: linear-gradient(135deg, #7F1D1D, #991B1B); color: white; padding: 10px 14px; border-radius: var(--radius-md); font-size: 13px; font-weight: 700; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; box-shadow: 0 4px 12px rgba(153, 27, 27, 0.25); margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 18px;">👑</span>
+              <div>
+                <div style="font-weight: 800; font-size: 13px;">Admin Control Active (ಗಣೇಶ್ - ಅಡ್ಮಿನ್)</div>
+                <div style="font-size: 10px; opacity: 0.9; font-weight: 500;">Manage group settings, approvals & categories</div>
+              </div>
             </div>
+            <button class="btn-primary-wide" style="width: auto; background: white; color: #991B1B; padding: 6px 14px; font-size: 12px; font-weight: 800; border-radius: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);" onclick="openAdminControlCenter()">
+              ⚡ Open Admin Panel / ಅಡ್ಮಿನ್ ಪ್ಯಾನೆಲ್ <span id="pendingApprovalsBadgeCount" style="background:#EF4444; color:white; padding:1px 6px; border-radius:10px; font-size:10px; margin-left:4px;">1</span>
+            </button>
           </div>
 
           <!-- MEMBER REJECTED PAYMENT ALERT BANNER -->
@@ -273,11 +275,11 @@
           <div class="info-list-card">
             <div class="info-row">
               <label>Group Name</label>
-              <span>Sri Ganesh Friends</span>
+              <span class="group-name-display">Sri Ganesh Friends</span>
             </div>
             <div class="info-row">
               <label>Monthly Contribution</label>
-              <span>₹ 200 per member</span>
+              <span class="monthly-amt-display">₹ 200 per member</span>
             </div>
             <div class="info-row">
               <label>Members</label>
@@ -301,13 +303,13 @@
             </div>
             <div class="info-row">
               <label>Next Draw Date</label>
-              <span style="color: var(--accent-gold);">12th Oct 2026</span>
+              <span class="next-draw-date-display" style="color: var(--accent-gold); font-weight: 800;">12th Oct 2026</span>
             </div>
           </div>
 
           <div class="notice-box">
             <span>✅</span>
-            <div>ಪ್ರತಿ 12ನೇ ತಾರೀಖಿಗೆ ಚೀಟಿ ನಡೆಯುತ್ತದೆ. Cheeti will be conducted on 12th of every month.</div>
+            <div class="cheeti-conduct-notice-display">ಪ್ರತಿ 12ನೇ ತಾರೀಖಿಗೆ ಚೀಟಿ ನಡೆಯುತ್ತದೆ. Cheeti will be conducted on 12th of every month.</div>
           </div>
         </div>
 
@@ -1225,6 +1227,134 @@
       <div id="categoriesListContainer">
         <!-- Rendered dynamically -->
       </div>
+    </div>
+  </div>
+
+  <!-- DEDICATED ADMIN CONTROL CENTER / ADMIN DASHBOARD MODAL -->
+  <div class="modal-overlay" id="modalAdminControlCenter">
+    <div class="modal-box" style="max-width: 440px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #064E3B, #047857); color: white; padding: 14px 16px; border-radius: 14px 14px 0 0; margin: -16px -16px 14px -16px;">
+        <div>
+          <h3 style="color: white; margin: 0; font-size: 16px;">👑 Admin Control Center / ಅಡ್ಮಿನ್ ನಿಯಂತ್ರಣ</h3>
+          <div style="font-size: 11px; opacity: 0.9; margin-top: 2px;">Manage group settings, approvals, loans & roster</div>
+        </div>
+        <button class="btn-close-modal" style="color: white;" onclick="closeModal('modalAdminControlCenter')">✕</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+        <!-- Card 1: Global App & Group Settings -->
+        <div class="admin-grid-card" onclick="closeModal('modalAdminControlCenter'); openModal('modalEditGlobalSettings');">
+          <div style="font-size: 24px;">🏢</div>
+          <div class="admin-card-title">Global App Settings / ಸೆಟ್ಟಿಂಗ್ಸ್</div>
+          <div class="admin-card-desc">Edit Title, Group Name, Monthly Amount & Effective Date</div>
+        </div>
+
+        <!-- Card 2: Payment Approvals -->
+        <div class="admin-grid-card" onclick="closeModal('modalAdminControlCenter'); renderAdminPendingApprovalsModal();">
+          <div style="font-size: 24px; position: relative;">
+            ✅
+            <span id="adminPanelPendingBadge" style="position: absolute; top: -4px; right: -4px; background: #EF4444; color: white; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 10px;">1</span>
+          </div>
+          <div class="admin-card-title">Payment Approvals / ಪಾವತಿ ಪರಿಶೀಲನೆ</div>
+          <div class="admin-card-desc">Review UPI receipts & approve/reject member payments</div>
+        </div>
+
+        <!-- Card 3: Expense Categories -->
+        <div class="admin-grid-card" onclick="closeModal('modalAdminControlCenter'); openManageCategoriesModal();">
+          <div style="font-size: 24px;">⚙️</div>
+          <div class="admin-card-title">Expense Categories / ವರ್ಗಗಳು</div>
+          <div class="admin-card-desc">Add & activate/deactivate expense category options</div>
+        </div>
+
+        <!-- Card 4: Broadcast Alert -->
+        <div class="admin-grid-card" onclick="closeModal('modalAdminControlCenter'); openModal('modalSendNotification');">
+          <div style="font-size: 24px;">📢</div>
+          <div class="admin-card-title">Alert Members / ಸೂಚನೆ</div>
+          <div class="admin-card-desc">Send push notification reminders to all members</div>
+        </div>
+
+        <!-- Card 5: Member Loans -->
+        <div class="admin-grid-card" onclick="closeModal('modalAdminControlCenter'); openModal('modalManageMemberLoan');">
+          <div style="font-size: 24px;">💳</div>
+          <div class="admin-card-title">Member Loans / ಸಾಲದ ಬಡ್ಡಿ</div>
+          <div class="admin-card-desc">Manage principal amounts & auto 5% monthly interest</div>
+        </div>
+
+        <!-- Card 6: Member Roster -->
+        <div class="admin-grid-card" onclick="closeModal('modalAdminControlCenter'); openModal('modalAddMember');">
+          <div style="font-size: 24px;">👥</div>
+          <div class="admin-card-title">Add Member / ಸದಸ್ಯರು</div>
+          <div class="admin-card-desc">Register new members & assign Admin or Member roles</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-primary-wide" style="flex: 1; background: #2563EB; font-size: 11px; padding: 8px;" onclick="testAdminPushNotification()">🔔 Test Push Notif</button>
+        <button class="btn-primary-wide" style="flex: 1; background: #4B5563; font-size: 11px; padding: 8px;" onclick="closeModal('modalAdminControlCenter'); openModal('modalChangePassword');">🔑 Password</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN EDIT GLOBAL APP & GROUP SETTINGS MODAL -->
+  <div class="modal-overlay" id="modalEditGlobalSettings">
+    <div class="modal-box" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3>🏢 Global App & Group Settings / ಅಡ್ಮಿನ್ ಸೆಟ್ಟಿಂಗ್ಸ್</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalEditGlobalSettings')">✕</button>
+      </div>
+
+      <form onsubmit="handleSaveGlobalSettingsSubmit(event)" novalidate>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label>App Title (English)</label>
+          <input type="text" id="cfgAppTitleEn" class="form-input" value="Ganesha Cheeti" data-validate="required" data-field-name-en="App Title (English)" data-field-name-kn="ಆ್ಯಪ್ ಹೆಸರು (ಇಂಗ್ಲಿಷ್)">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label>ಆ್ಯಪ್ ಶೀರ್ಷಿಕೆ (ಕನ್ನಡ)</label>
+          <input type="text" id="cfgAppTitleKn" class="form-input" value="ಗಣೇಶ ಚೀಟಿ" data-validate="required" data-field-name-en="App Title (Kannada)" data-field-name-kn="ಆ್ಯಪ್ ಶೀರ್ಷಿಕೆ (ಕನ್ನಡ)">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label>Group Name / ಗುಂಪಿನ ಹೆಸರು</label>
+          <input type="text" id="cfgGroupName" class="form-input" value="Sri Ganesh Friends" data-validate="required" data-field-name-en="Group Name" data-field-name-kn="ಗುಂಪಿನ ಹೆಸರು">
+        </div>
+
+        <div style="background:#FFFBEB; border:1px solid #FCD34D; padding:10px; border-radius:8px; margin-bottom:12px; font-size:11px; color:#92400E;">
+          <div style="font-weight:800; margin-bottom:2px;">📅 Effective Date Rule / ಜಾರಿಗೆ ಬರುವ ದಿನಾಂಕದ ನಿಯಮ:</div>
+          <div>Changing monthly contribution or draw date will only apply to future months starting from the selected Effective Month. Past transaction history remains safe and unchanged!</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Monthly Amount (₹)</label>
+            <input type="number" id="cfgMonthlyAmt" class="form-input" value="200" min="50" step="50" data-validate="required|number" data-field-name-en="Monthly Amount" data-field-name-kn="ತಿಂಗಳ ಕೊಡುಗೆ ಮೊತ್ತ">
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Effective From Month</label>
+            <select id="cfgEffectiveMonth" class="form-input" style="font-weight:700;">
+              <option value="Oct 2026" selected>Oct 2026 (Immediate)</option>
+              <option value="Nov 2026">Nov 2026 (Next Month)</option>
+              <option value="Dec 2026">Dec 2026</option>
+              <option value="Jan 2027">Jan 2027</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:14px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Cheeti Draw Day</label>
+            <input type="number" id="cfgDrawDay" class="form-input" value="12" min="1" max="31" data-validate="required|number" data-field-name-en="Cheeti Draw Day" data-field-name-kn="ಚೀಟಿ ನಡೆಸುವ ದಿನಾಂಕ">
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Default Interest (%)</label>
+            <input type="number" id="cfgInterestRate" class="form-input" value="5" min="0" max="20" step="0.5" data-validate="required" data-field-name-en="Interest Rate" data-field-name-kn="ಬಡ್ಡಿ ದರ">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary-wide">Save Global Configuration / ಸೆಟ್ಟಿಂಗ್ಸ್ ಉಳಿಸಿ</button>
+      </form>
     </div>
   </div>
 

@@ -174,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updatePendingBadgeCount();
   checkMemberRejectedPaymentAlert();
   renderCategoryDropdowns();
+  applyGlobalAppConfig();
 });
 
 // --- CUSTOM MOBILE TOAST NOTIFICATION ENGINE (REPLACES BROWSER ALERTS) ---
@@ -2057,6 +2058,120 @@ function renderCategoryDropdowns() {
     filterContainer.innerHTML = html;
   }
 }
+
+// ============================================================
+// GLOBAL APP & GROUP CONFIGURATION ENGINE (WITH EFFECTIVE FROM DATE RULE)
+// ============================================================
+
+let appConfig = {
+  appTitleEn: "Ganesha Cheeti",
+  appTitleKn: "ಗಣೇಶ ಚೀಟಿ",
+  groupNameEn: "Sri Ganesh Friends",
+  groupNameKn: "ಶ್ರೀ ಗಣೇಶ್ ಫ್ರೆಂಡ್ಸ್",
+  monthlyContribution: 200,
+  effectiveFromMonth: "Oct 2026",
+  cheetiDrawDay: 12,
+  defaultInterestRate: 5
+};
+
+function applyGlobalAppConfig() {
+  // Update App Titles across screens & headers
+  document.querySelectorAll('.app-title-en-display').forEach(el => el.textContent = appConfig.appTitleEn);
+  document.querySelectorAll('.app-title-kn-display').forEach(el => el.textContent = appConfig.appTitleKn);
+  document.querySelectorAll('.app-title-brand-display').forEach(el => {
+    el.textContent = `${appConfig.appTitleEn} (${appConfig.appTitleKn})`;
+  });
+
+  // Update i18n dictionary for dynamic language toggling
+  if (i18n.en) {
+    i18n.en.appTitle = appConfig.appTitleEn;
+    i18n.en.groupName = `Group: ${appConfig.groupNameEn}`;
+  }
+  if (i18n.kn) {
+    i18n.kn.appTitle = appConfig.appTitleKn;
+    i18n.kn.groupName = `ಗುಂಪು: ${appConfig.groupNameKn}`;
+  }
+
+  // Update Group Name displays
+  document.querySelectorAll('.group-name-display').forEach(el => el.textContent = appConfig.groupNameEn);
+
+  // Update Monthly contribution displays
+  document.querySelectorAll('.monthly-amt-display').forEach(el => el.textContent = `₹ ${appConfig.monthlyContribution} per member`);
+
+  // Update Draw date & notice box
+  const drawDayText = `${appConfig.cheetiDrawDay}th Oct 2026`;
+  document.querySelectorAll('.next-draw-date-display').forEach(el => el.textContent = drawDayText);
+  document.querySelectorAll('.cheeti-conduct-notice-display').forEach(el => {
+    el.textContent = `ಪ್ರತಿ ${appConfig.cheetiDrawDay}ನೇ ತಾರೀಖಿಗೆ ಚೀಟಿ ನಡೆಯುತ್ತದೆ. Cheeti will be conducted on ${appConfig.cheetiDrawDay}th of every month.`;
+  });
+
+  // Update Monthly Contribution input default value on payment form if present
+  const contribInput = document.getElementById('contribAmountInput');
+  if (contribInput) {
+    contribInput.value = appConfig.monthlyContribution;
+  }
+  if (typeof updateTotalPaymentCalc === 'function') {
+    updateTotalPaymentCalc();
+  }
+}
+
+function openAdminControlCenter() {
+  const pendingCount = paymentSubmissions.filter(s => s.status === 'Pending Approval').length;
+  const badge = document.getElementById('adminPanelPendingBadge');
+  if (badge) {
+    badge.textContent = pendingCount;
+    badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+  }
+  openModal('modalAdminControlCenter');
+}
+
+function handleSaveGlobalSettingsSubmit(event) {
+  event.preventDefault();
+  if (!validateForm(event.target)) return;
+
+  const appTitleEn = document.getElementById('cfgAppTitleEn').value.trim();
+  const appTitleKn = document.getElementById('cfgAppTitleKn').value.trim();
+  const groupName = document.getElementById('cfgGroupName').value.trim();
+  const monthlyAmt = parseInt(document.getElementById('cfgMonthlyAmt').value, 10);
+  const effectiveMonth = document.getElementById('cfgEffectiveMonth').value;
+  const drawDay = parseInt(document.getElementById('cfgDrawDay').value, 10);
+  const interestRate = parseFloat(document.getElementById('cfgInterestRate').value);
+
+  appConfig.appTitleEn = appTitleEn;
+  appConfig.appTitleKn = appTitleKn;
+  appConfig.groupNameEn = groupName;
+  appConfig.groupNameKn = groupName;
+  appConfig.monthlyContribution = monthlyAmt;
+  appConfig.effectiveFromMonth = effectiveMonth;
+  appConfig.cheetiDrawDay = drawDay;
+  appConfig.defaultInterestRate = interestRate;
+
+  // Apply effective date rule logic to memberPaymentsData for months on or after effectiveMonth
+  const allMonths = Object.keys(memberPaymentsData);
+  const effectiveIdx = allMonths.indexOf(effectiveMonth);
+
+  if (effectiveIdx !== -1) {
+    for (let i = effectiveIdx; i < allMonths.length; i++) {
+      const m = allMonths[i];
+      if (memberPaymentsData[m]) {
+        memberPaymentsData[m].forEach(r => {
+          // Only update unpaid default amounts for effective future months
+          if (!r.isPaid) {
+            r.amount = monthlyAmt;
+          }
+        });
+      }
+    }
+  }
+
+  applyGlobalAppConfig();
+  closeModal('modalEditGlobalSettings');
+
+  showToast(currentLang === 'kn'
+    ? `ಗ್ಲೋಬಲ್ ಸೆಟ್ಟಿಂಗ್ಸ್ ಉಳಿಸಲಾಗಿದೆ! (${effectiveMonth} ರಿಂದ ತಿಂಗಳ ಮೊತ್ತ ₹${monthlyAmt})`
+    : `Global settings saved! Monthly amount ₹${monthlyAmt} effective from ${effectiveMonth}.`, 'success');
+}
+
 
 
 
