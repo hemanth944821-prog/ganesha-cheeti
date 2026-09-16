@@ -801,40 +801,70 @@ function registerServiceWorker() {
   }
 }
 
-// Send Web Push Notification to Device / Browser (Desktop Chrome & Mobile Android/iOS)
+// Send Native OS System Push Notification (Windows Action Center, Mac Notification Center, Android/iOS System Tray)
 async function sendWebPushNotification(title, body) {
   playNotificationSound();
 
-  if ('Notification' in window && Notification.permission === 'granted') {
+  if (!('Notification' in window)) {
+    showToast(`🔔 ${title}: ${body}`, 'info', 4500);
+    return;
+  }
+
+  let permission = Notification.permission;
+  if (permission === 'default') {
     try {
-      if ('serviceWorker' in navigator) {
+      permission = await Notification.requestPermission();
+    } catch (e) {
+      console.warn('Request permission error:', e);
+    }
+  }
+
+  if (permission === 'granted') {
+    const iconUrl = `${window.location.origin}/ganesha_avatar.png`;
+    
+    // 1. Try Service Worker System Notification (Best for Android/iOS & Chrome PWA)
+    if ('serviceWorker' in navigator) {
+      try {
         const reg = await navigator.serviceWorker.ready;
         if (reg && reg.showNotification) {
-          reg.showNotification(title, {
+          await reg.showNotification(title, {
             body: body,
-            icon: 'ganesha_avatar.png',
-            badge: 'ganesha_avatar.png',
+            icon: iconUrl,
+            badge: iconUrl,
             vibrate: [200, 100, 200],
-            tag: 'ganesha-cheeti-notif',
+            tag: 'ganesha-cheeti-sysnotif-' + Date.now(),
             renotify: true
           });
           return;
         }
+      } catch (swErr) {
+        console.warn('Service worker notification error:', swErr.message);
       }
+    }
 
-      new Notification(title, {
+    // 2. Direct Window Notification API (Triggers native Windows Action Center Toast in Chrome/Edge/Firefox)
+    try {
+      const sysNotif = new Notification(title, {
         body: body,
-        icon: 'ganesha_avatar.png',
-        badge: 'ganesha_avatar.png',
-        tag: 'ganesha-cheeti-notif',
+        icon: iconUrl,
+        badge: iconUrl,
+        tag: 'ganesha-cheeti-sysnotif-' + Date.now(),
         renotify: true
       });
+      
+      sysNotif.onclick = function() {
+        window.focus();
+        this.close();
+      };
     } catch (err) {
-      console.warn('Browser Notification error:', err.message);
+      console.warn('Native Window Notification error:', err.message);
       showToast(`🔔 ${title}: ${body}`, 'info', 4500);
     }
   } else {
-    showToast(`🔔 ${title}: ${body}`, 'info', 4500);
+    // If user blocked system notifications in browser settings
+    showToast(currentLang === 'kn' 
+      ? '⚠️ ಸಿಸ್ಟಮ್ ನೋಟಿಫಿಕೇಶನ್ ಬ್ಲಾಕ್ ಆಗಿದೆ. ಬ್ರೌಸರ್ URL ಬಳಿ 🔒 ಲೈಕ್ ಐಕಾನ್ ಕ್ಲಿಕ್ ಮಾಡಿ ನೋಟಿಫಿಕೇಶನ್ Allow ಮಾಡಿ!' 
+      : '⚠️ System notifications blocked! Click 🔒 lock icon in Chrome address bar -> Allow Notifications.', 'warning', 6000);
   }
 }
 
