@@ -2,13 +2,13 @@ const sql = require('mssql');
 require('dotenv').config();
 
 const config = {
-  user: process.env.DB_USER || 'sa',
-  password: process.env.DB_PASSWORD || 'YourPassword123!',
-  server: process.env.DB_SERVER || 'localhost',
-  database: process.env.DB_NAME || 'GaneshaCheetiDB',
+  user: process.env.DB_USER || 'db68614',
+  password: process.env.DB_PASSWORD || 'Wi3#?Mk7x2N=',
+  server: process.env.DB_SERVER || 'db68614.public.databaseasp.net',
+  database: process.env.DB_NAME || 'db68614',
   port: parseInt(process.env.DB_PORT, 10) || 1433,
   options: {
-    encrypt: process.env.DB_ENCRYPT === 'true',
+    encrypt: true,
     trustServerCertificate: true,
   },
   pool: {

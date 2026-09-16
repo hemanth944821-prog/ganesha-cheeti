@@ -26,6 +26,14 @@
       "use": "@vercel/static"
     }
   ],
+  "env": {
+    "DB_SERVER": "db68614.public.databaseasp.net",
+    "DB_NAME": "db68614",
+    "DB_USER": "db68614",
+    "DB_PASSWORD": "Wi3#?Mk7x2N=",
+    "DB_PORT": "1433",
+    "DB_ENCRYPT": "true"
+  },
   "routes": [
     {
       "src": "/api/(.*)",
