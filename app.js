@@ -136,21 +136,21 @@ let currentUser = null;
 
 // Members List Data
 const membersData = [
-  { id: 1, code: 'M#01', nameEn: 'Ganesh (Admin)', nameKn: 'ಗಣೇಶ್ (ಅಡ್ಮಿನ್)', phone: '9876543210', role: 'Admin', status: 'Active' },
-  { id: 2, code: 'M#02', nameEn: 'Ramesh', nameKn: 'ರಮೇಶ್', phone: '9876543211', role: 'Member', status: 'Active' },
-  { id: 3, code: 'M#03', nameEn: 'Suresh', nameKn: 'ಸುರೇಶ್', phone: '9876543212', role: 'Member', status: 'Active' },
-  { id: 4, code: 'M#04', nameEn: 'Mahesh', nameKn: 'ಮಹೇಶ್', phone: '9876543213', role: 'Member', status: 'Active' },
-  { id: 5, code: 'M#05', nameEn: 'Ravi', nameKn: 'ರವಿ', phone: '9876543214', role: 'Member', status: 'Active' },
-  { id: 6, code: 'M#06', nameEn: 'Shankar', nameKn: 'ಶಂಕರ್', phone: '9876543215', role: 'Member', status: 'Active' },
-  { id: 7, code: 'M#07', nameEn: 'Ramesh Kumar', nameKn: 'ರಮೇಶ್ ಕುಮಾರ್', phone: '9876543216', role: 'Member', status: 'Active' },
-  { id: 8, code: 'M#08', nameEn: 'Lakshmi', nameKn: 'ಲಕ್ಷ್ಮಿ', phone: '9876543217', role: 'Member', status: 'Active' },
-  { id: 9, code: 'M#09', nameEn: 'Anitha', nameKn: 'ಅನಿತಾ', phone: '9876543218', role: 'Member', status: 'Active' },
-  { id: 10, code: 'M#10', nameEn: 'Kumar', nameKn: 'ಕುಮಾರ್', phone: '9876543219', role: 'Member', status: 'Active' },
-  { id: 11, code: 'M#11', nameEn: 'Pooja', nameKn: 'ಪೂಜಾ', phone: '9876543220', role: 'Member', status: 'Active' },
-  { id: 12, code: 'M#12', nameEn: 'Manjunath', nameKn: 'ಮಂಜುನಾಥ್', phone: '9876543221', role: 'Member', status: 'Active' },
-  { id: 13, code: 'M#13', nameEn: 'Shivaram', nameKn: 'ಶಿವರಾಮ್', phone: '9876543222', role: 'Member', status: 'Active' },
-  { id: 14, code: 'M#14', nameEn: 'Basavaraj', nameKn: 'ಬಸವರಾಜ್', phone: '9876543223', role: 'Member', status: 'Active' },
-  { id: 15, code: 'M#15', nameEn: 'Venkatesh', nameKn: 'ವೆಂಕಟೇಶ್', phone: '9876543224', role: 'Member', status: 'Active' }
+  { id: 1, code: 'M#01', nameEn: 'Ganesh (Admin)', nameKn: 'ಗಣೇಶ್ (ಅಡ್ಮಿನ್)', phone: '9876543210', role: 'Admin', status: 'Active', loanPrincipal: 10000 },
+  { id: 2, code: 'M#02', nameEn: 'Ramesh', nameKn: 'ರಮೇಶ್', phone: '9876543211', role: 'Member', status: 'Active', loanPrincipal: 5000 },
+  { id: 3, code: 'M#03', nameEn: 'Suresh', nameKn: 'ಸುರೇಶ್', phone: '9876543212', role: 'Member', status: 'Active', loanPrincipal: 0 },
+  { id: 4, code: 'M#04', nameEn: 'Mahesh', nameKn: 'ಮಹೇಶ್', phone: '9876543213', role: 'Member', status: 'Active', loanPrincipal: 10000 },
+  { id: 5, code: 'M#05', nameEn: 'Ravi', nameKn: 'ರವಿ', phone: '9876543214', role: 'Member', status: 'Active', loanPrincipal: 0 },
+  { id: 6, code: 'M#06', nameEn: 'Shankar', nameKn: 'ಶಂಕರ್', phone: '9876543215', role: 'Member', status: 'Active', loanPrincipal: 2000 },
+  { id: 7, code: 'M#07', nameEn: 'Ramesh Kumar', nameKn: 'ರಮೇಶ್ ಕುಮಾರ್', phone: '9876543216', role: 'Member', status: 'Active', loanPrincipal: 5000 },
+  { id: 8, code: 'M#08', nameEn: 'Lakshmi', nameKn: 'ಲಕ್ಷ್ಮಿ', phone: '9876543217', role: 'Member', status: 'Active', loanPrincipal: 0 },
+  { id: 9, code: 'M#09', nameEn: 'Anitha', nameKn: 'ಅನಿತಾ', phone: '9876543218', role: 'Member', status: 'Active', loanPrincipal: 0 },
+  { id: 10, code: 'M#10', nameEn: 'Kumar', nameKn: 'ಕುಮಾರ್', phone: '9876543219', role: 'Member', status: 'Active', loanPrincipal: 0 },
+  { id: 11, code: 'M#11', nameEn: 'Pooja', nameKn: 'ಪೂಜಾ', phone: '9876543220', role: 'Member', status: 'Active', loanPrincipal: 0 },
+  { id: 12, code: 'M#12', nameEn: 'Manjunath', nameKn: 'ಮಂಜುನಾಥ್', phone: '9876543221', role: 'Member', status: 'Active', loanPrincipal: 0 },
+  { id: 13, code: 'M#13', nameEn: 'Shivaram', nameKn: 'ಶಿವರಾಮ್', phone: '9876543222', role: 'Member', status: 'Active', loanPrincipal: 0 },
+  { id: 14, code: 'M#14', nameEn: 'Basavaraj', nameKn: 'ಬಸವರಾಜ್', phone: '9876543223', role: 'Member', status: 'Active', loanPrincipal: 0 },
+  { id: 15, code: 'M#15', nameEn: 'Venkatesh', nameKn: 'ವೆಂಕಟೇಶ್', phone: '9876543224', role: 'Member', status: 'Active', loanPrincipal: 0 }
 ];
 
 // Expenses Data
@@ -414,15 +414,18 @@ function populateMemberDropdowns() {
   const selPwd = document.getElementById('pwdMemberSelect');
   const selDraw = document.getElementById('drawMemberSelect');
   const selContrib = document.getElementById('contribMemberSelect');
+  const selLoanModal = document.getElementById('loanModalMemberSelect');
 
   const optionsHtml = membersData.map(m => {
     const name = (currentLang === 'kn') ? m.nameKn : m.nameEn;
-    return `<option value="${m.id}">${m.code} - ${name}</option>`;
+    const loanTag = m.loanPrincipal ? ` (Loan: ₹${m.loanPrincipal.toLocaleString()})` : '';
+    return `<option value="${m.id}">${m.code} - ${name}${loanTag}</option>`;
   }).join('');
 
   if (selPwd) selPwd.innerHTML = optionsHtml;
   if (selDraw) selDraw.innerHTML = optionsHtml;
   if (selContrib) selContrib.innerHTML = optionsHtml;
+  if (selLoanModal) selLoanModal.innerHTML = optionsHtml;
 }
 
 // Switch Active Screen
@@ -1443,6 +1446,81 @@ function renderFinancialReportSheet() {
       Formula: CB = OB (₹${ob.toLocaleString()}) + Inflows (₹${totalInflow.toLocaleString()}) - Outflows (₹${totalOutflow.toLocaleString()})
     </div>
   `;
+}
+
+// ============================================================
+// DYNAMIC BORROWED LOAN INTEREST AUTO-CALCULATOR & RECEIPT UPLOAD
+// ============================================================
+
+// When Member is selected in Payment Form, auto-calculate 5% interest based on their borrowed loan
+function onContribMemberChange(memberId) {
+  const m = membersData.find(mem => mem.id == memberId) || membersData[0];
+  const loanPrincipal = m.loanPrincipal || 0;
+  const calculatedInterest = Math.round(loanPrincipal * 0.05); // 5% monthly interest
+
+  const principalText = document.getElementById('loanInfoPrincipalText');
+  const interestText = document.getElementById('loanInfoInterestText');
+  const interestInput = document.getElementById('contribInterestInput');
+
+  if (principalText) principalText.textContent = `💳 Borrowed Loan: ₹ ${loanPrincipal.toLocaleString()}`;
+  if (interestText) interestText.textContent = `Monthly Interest (5%): ₹ ${calculatedInterest.toLocaleString()}`;
+  if (interestInput) interestInput.value = calculatedInterest;
+
+  updateTotalPaymentCalc();
+}
+
+// Preview UPI Payment Screenshot Image
+function previewUpiReceipt(input) {
+  const previewBox = document.getElementById('upiReceiptPreviewBox');
+  const imgPreview = document.getElementById('upiReceiptImgPreview');
+
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      if (imgPreview) imgPreview.src = e.target.result;
+      if (previewBox) previewBox.style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+  } else {
+    if (previewBox) previewBox.style.display = 'none';
+  }
+}
+
+// When member is selected in Loan Management Modal
+function onLoanModalMemberChange(memberId) {
+  const m = membersData.find(mem => mem.id == memberId) || membersData[0];
+  const principalInput = document.getElementById('loanModalPrincipalInput');
+  if (principalInput) principalInput.value = m.loanPrincipal || 0;
+  updateLoanModalCalculatedInterest();
+}
+
+// Live calculation display in Admin Loan Modal
+function updateLoanModalCalculatedInterest() {
+  const principal = parseInt(document.getElementById('loanModalPrincipalInput')?.value || 0, 10);
+  const interest = Math.round(principal * 0.05);
+  const display = document.getElementById('loanModalInterestDisplay');
+  if (display) display.textContent = `₹ ${interest.toLocaleString()} per month (5%)`;
+}
+
+// Handle Admin Save Borrowed Loan Principal
+function handleSaveMemberLoanSubmit(event) {
+  event.preventDefault();
+  const memberId = parseInt(document.getElementById('loanModalMemberSelect')?.value || 1, 10);
+  const principal = parseInt(document.getElementById('loanModalPrincipalInput')?.value || 0, 10);
+
+  const m = membersData.find(mem => mem.id === memberId);
+  if (m) {
+    m.loanPrincipal = principal;
+    const interest = Math.round(principal * 0.05);
+
+    populateMemberDropdowns();
+    onContribMemberChange(memberId);
+    closeModal('modalManageMemberLoan');
+
+    showToast(currentLang === 'kn'
+      ? `${m.nameKn || m.nameEn} ಸಾಲದ ಮೊತ್ತ ₹${principal.toLocaleString()} ನವೀಕರಿಸಲಾಗಿದೆ! (ತಿಂಗಳ ಬಡ್ಡಿ: ₹${interest})`
+      : `Loan updated for ${m.nameEn} to ₹${principal.toLocaleString()}! (Next month interest auto-set to ₹${interest})`, 'success');
+  }
 }
 
 

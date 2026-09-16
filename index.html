@@ -324,10 +324,24 @@
           <div id="subTabContribPay">
             <form onsubmit="handleContributionSubmit(event)" class="form-card">
               <div class="form-group">
-                <label>Select Member / ಸದಸ್ಯರನ್ನು ಆಯ್ಕೆಮಾಡಿ</label>
-                <select id="contribMemberSelect" class="form-input" required style="font-weight: 700;">
+                <label style="display: flex; justify-content: space-between; align-items: center;">
+                  <span>Select Member / ಸದಸ್ಯರನ್ನು ಆಯ್ಕೆಮಾಡಿ</span>
+                  <button type="button" class="admin-only-btn chip-tab" style="background:#064E3B; color:white; padding:2px 6px; font-size:10px; display:none;" onclick="openModal('modalManageMemberLoan')">💳 Loan Amount</button>
+                </label>
+                <select id="contribMemberSelect" class="form-input" required onchange="onContribMemberChange(this.value)" style="font-weight: 700;">
                   <!-- Filled dynamically -->
                 </select>
+              </div>
+
+              <!-- DYNAMIC BORROWED LOAN INFO BANNER -->
+              <div id="memberLoanInfoBanner" style="background:#FFFBEB; border:1px solid #FCD34D; padding:10px 12px; border-radius:8px; font-size:12px; margin-bottom:12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: #92400E;">
+                  <span id="loanInfoPrincipalText">💳 Borrowed Loan: ₹ 10,000</span>
+                  <span id="loanInfoInterestText">Monthly Interest (5%): ₹ 500</span>
+                </div>
+                <div style="font-size: 10px; color: #B45309; margin-top: 3px;">
+                  💡 ಸಾಲದ ಆಧಾರದ ಮೇಲೆ ಮುಂದಿನ ತಿಂಗಳುಗಳಿಂದ ಬಡ್ಡಿ ₹500 ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಲೆಕ್ಕಾಚಾರವಾಗುತ್ತದೆ.
+                </div>
               </div>
 
               <div class="form-group">
@@ -347,15 +361,15 @@
                   <input type="number" id="contribAmountInput" class="form-input" value="200" min="50" step="50" required oninput="updateTotalPaymentCalc()">
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
-                  <label>Interest Amount (₹)</label>
-                  <input type="number" id="contribInterestInput" class="form-input" value="50" min="0" step="10" required oninput="updateTotalPaymentCalc()">
+                  <label>Auto Loan Interest (₹)</label>
+                  <input type="number" id="contribInterestInput" class="form-input" value="500" min="0" step="10" required oninput="updateTotalPaymentCalc()">
                 </div>
               </div>
 
               <!-- DYNAMIC TOTAL DISPLAY -->
               <div class="calc-summary-box">
-                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Total Collection Amount / ಒಟ್ಟು ಪಾವತಿ</div>
-                <div class="calc-summary-val" id="totalPaymentCalcVal">₹ 250 (₹ 200 + ₹ 50)</div>
+                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Total Collection Required / ಒಟ್ಟು ಪಾವತಿ</div>
+                <div class="calc-summary-val" id="totalPaymentCalcVal">₹ 700 (₹ 200 Cheeti + ₹ 500 Interest)</div>
               </div>
 
               <div class="form-group">
@@ -392,6 +406,26 @@
                     </div>
                     <span>🏛️</span>
                   </div>
+                </div>
+              </div>
+
+              <!-- UPI RECEIPT & SCREENSHOT UPLOAD SECTION -->
+              <div class="form-group" style="background:#F0FDFA; border:1px solid #99F6E4; padding:12px; border-radius:8px; margin-bottom:14px;">
+                <label style="color:#0F766E; font-weight:800;">📸 Upload UPI Payment Screenshot & Ref No / ರಸೀದಿ ಅಪ್‌ಲೋಡ್</label>
+
+                <div style="margin-top: 6px;">
+                  <label style="font-size: 11px;">UPI Ref No / UTR Number</label>
+                  <input type="text" id="contribUtrInput" class="form-input" placeholder="e.g. UTR: 324598712365">
+                </div>
+
+                <div style="margin-top: 8px;">
+                  <label style="font-size: 11px;">Payment Receipt Screenshot Image</label>
+                  <input type="file" id="contribUpiReceiptFile" class="form-input" accept="image/*" onchange="previewUpiReceipt(this)" style="padding: 5px;">
+                </div>
+
+                <div id="upiReceiptPreviewBox" style="display:none; text-align:center; margin-top:8px;">
+                  <img id="upiReceiptImgPreview" alt="UPI Receipt Preview" style="max-width:160px; max-height:140px; border-radius:8px; border:2px solid #0D9488; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                  <div style="font-size:10px; color:#0D9488; font-weight:700; margin-top:4px;">✅ Payment Screenshot Attached / ರಸೀದಿ ಲಗತ್ತಿಸಲಾಗಿದೆ</div>
                 </div>
               </div>
 
@@ -1045,6 +1079,37 @@
         <button class="btn-control" style="flex: 1; background: #0EA5E9; justify-content: center; padding: 12px; border-radius: 20px;" onclick="closeModal('modalProfile'); openModal('modalChangePassword');">🔑 Password</button>
         <button class="btn-control" style="flex: 1; background: #DC2626; justify-content: center; padding: 12px; border-radius: 20px;" onclick="closeModal('modalProfile'); handleLogout();">🚪 Logout</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ADMIN MANAGE MEMBER LOAN MODAL -->
+  <div class="modal-overlay" id="modalManageMemberLoan">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>💳 Manage Member Loan / ಸಾಲದ ಮೊತ್ತ ನವೀಕರಿಸಿ</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalManageMemberLoan')">✕</button>
+      </div>
+
+      <form onsubmit="handleSaveMemberLoanSubmit(event)">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Select Member / ಸದಸ್ಯರನ್ನು ಆಯ್ಕೆಮಾಡಿ</label>
+          <select id="loanModalMemberSelect" class="form-input" required onchange="onLoanModalMemberChange(this.value)">
+            <!-- Filled dynamically -->
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Borrowed Loan Amount (₹) / ತೆಗೆದುಕೊಂಡ ಸಾಲದ ಮೊತ್ತ</label>
+          <input type="number" id="loanModalPrincipalInput" class="form-input" value="10000" min="0" step="500" required oninput="updateLoanModalCalculatedInterest()">
+        </div>
+
+        <div class="calc-summary-box" style="margin-bottom: 14px;">
+          <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Calculated Monthly Interest (5%) / ತಿಂಗಳ ಬಡ್ಡಿ</div>
+          <div class="calc-summary-val" id="loanModalInterestDisplay">₹ 500 per month</div>
+        </div>
+
+        <button type="submit" class="btn-primary-wide">Save Loan Amount / ಉಳಿಸಿ</button>
+      </form>
     </div>
   </div>
 
