@@ -17,7 +17,7 @@
     <div class="brand-title-area">
       <img src="ganesha_avatar.png" class="brand-icon-img" alt="Ganesha">
       <div>
-        <div class="brand-name">Ganesha Cheeti (ಗಣೇಶ ಚೀಟಿ)</div>
+        <div class="brand-name app-title-brand-display">Ganesha Cheeti (ಗಣೇಶ ಚೀಟಿ)</div>
         <div class="brand-sub">Village Community Savings & Expense App</div>
       </div>
     </div>
@@ -57,8 +57,8 @@
           <!-- Lord Ganesha Artwork Image -->
           <img src="ganesha_avatar.png" class="ganesha-hero-img" alt="Lord Ganesha">
 
-          <h1 class="splash-title-kn" data-i18n="appTitle">ಗಣೇಶ ಚೀಟಿ</h1>
-          <h2 class="splash-title-en">Ganesha Cheeti</h2>
+          <h1 class="splash-title-kn app-title-kn-display" data-i18n="appTitle">ಗಣೇಶ ಚೀಟಿ</h1>
+          <h2 class="splash-title-en app-title-en-display">Ganesha Cheeti</h2>
 
           <div class="splash-slogan-box">
             <div class="splash-slogan-kn">ಒಟ್ಟಾಗಿ ಉಳಿತಾಯ – ಒಟ್ಟಾಗಿ ಅಭಿವೃದ್ಧಿ</div>
@@ -91,7 +91,7 @@
           <div class="login-card-advanced">
             <div class="login-header-graphic">
               <img src="ganesha_avatar.png" class="login-avatar-img" alt="Ganesha Avatar">
-              <h3>Ganesha Cheeti</h3>
+              <h3 class="app-title-en-display">Ganesha Cheeti</h3>
               <p>Village Savings & Cheeti Portal</p>
             </div>
 
@@ -424,17 +424,17 @@
                 </div>
               </div>
 
-              <!-- UPI RECEIPT & SCREENSHOT UPLOAD SECTION -->
-              <div class="form-group" style="background:#F0FDFA; border:1px solid #99F6E4; padding:12px; border-radius:8px; margin-bottom:14px;">
-                <label style="color:#0F766E; font-weight:800;">📸 Upload UPI Payment Screenshot & Ref No / ರಸೀದಿ ಅಪ್‌ಲೋಡ್</label>
+              <!-- UPI RECEIPT & SCREENSHOT UPLOAD SECTION (Hidden for Cash) -->
+              <div id="upiReceiptSection" class="form-group" style="background:#F0FDFA; border:1px solid #99F6E4; padding:12px; border-radius:8px; margin-bottom:14px;">
+                <label style="color:#0F766E; font-weight:800;">📸 Upload Payment Screenshot & Ref No / ರಸೀದಿ (ಐಚ್ಛಿಕ / Optional)</label>
 
                 <div style="margin-top: 6px;">
-                  <label style="font-size: 11px;">UPI Ref No / UTR Number</label>
-                  <input type="text" id="contribUtrInput" class="form-input" placeholder="e.g. UTR: 324598712365">
+                  <label style="font-size: 11px;">UPI / Bank Ref No / UTR Number (Optional / ಐಚ್ಛಿಕ)</label>
+                  <input type="text" id="contribUtrInput" class="form-input" placeholder="e.g. UTR: 324598712365 (Optional)">
                 </div>
 
                 <div style="margin-top: 8px;">
-                  <label style="font-size: 11px;">Payment Receipt Screenshot Image</label>
+                  <label style="font-size: 11px;">Payment Receipt Screenshot Image (Optional / ಐಚ್ಛಿಕ)</label>
                   <input type="file" id="contribUpiReceiptFile" class="form-input" accept="image/*" onchange="previewUpiReceipt(this)" style="padding: 5px;">
                 </div>
 

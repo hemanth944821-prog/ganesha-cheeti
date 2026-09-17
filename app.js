@@ -790,6 +790,15 @@ function filterExpenses(category, btn) {
 function selectPaymentMethod(card, method) {
   document.querySelectorAll('.payment-option-card').forEach(c => c.classList.remove('selected'));
   card.classList.add('selected');
+
+  const upiSection = document.getElementById('upiReceiptSection');
+  if (upiSection) {
+    if (method === 'cash') {
+      upiSection.style.display = 'none';
+    } else {
+      upiSection.style.display = 'block';
+    }
+  }
 }
 
 function openModal(modalId) {
@@ -811,13 +820,24 @@ async function handleContributionSubmit(event) {
   event.preventDefault();
   const memberId = parseInt(document.getElementById('contribMemberSelect')?.value || 1, 10);
   const month = document.getElementById('contribMonthSelect')?.value || 'Oct 2026';
-  const cheetiAmt = parseInt(document.getElementById('contribAmountInput')?.value || 200, 10);
-  const interestAmt = parseInt(document.getElementById('contribInterestInput')?.value || 50, 10);
+  const cheetiAmt = parseInt(document.getElementById('contribAmountInput')?.value || appConfig.monthlyContribution || 200, 10);
+  const interestAmt = parseInt(document.getElementById('contribInterestInput')?.value || 0, 10);
   const totalAmt = cheetiAmt + interestAmt;
-  const utr = document.getElementById('contribUtrInput')?.value || 'UTR: ' + Math.floor(100000000000 + Math.random()*900000000000);
+
+  let selectedMethod = 'UPI';
+  const selectedCard = document.querySelector('.payment-option-card.selected');
+  if (selectedCard) {
+    const onclickAttr = selectedCard.getAttribute('onclick') || '';
+    if (onclickAttr.includes("'cash'")) selectedMethod = 'Cash';
+    else if (onclickAttr.includes("'bank'")) selectedMethod = 'Bank Transfer';
+    else if (onclickAttr.includes("'upi'")) selectedMethod = 'UPI';
+  }
+
+  const rawUtr = (document.getElementById('contribUtrInput')?.value || '').trim();
+  const utr = rawUtr || (selectedMethod === 'Cash' ? 'Cash Payment' : ('UTR: ' + Math.floor(100000000000 + Math.random()*900000000000)));
   const member = membersData.find(m => m.id === memberId) || membersData[0];
 
-  const receiptImg = currentUploadedReceiptDataUrl || `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 300 180"><rect width="300" height="180" fill="%230D9488" rx="10"/><text x="50%" y="30%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="16" font-weight="bold" font-family="sans-serif">UPI Payment Receipt</text><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="%23FDE047" font-size="20" font-weight="bold" font-family="sans-serif">₹ ${totalAmt}.00</text><text x="50%" y="75%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="12" font-family="sans-serif">Ref: ${utr} • ${month}</text></svg>`;
+  const receiptImg = currentUploadedReceiptDataUrl || `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 300 180"><rect width="300" height="180" fill="%230D9488" rx="10"/><text x="50%" y="30%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="16" font-weight="bold" font-family="sans-serif">${selectedMethod} Payment Receipt</text><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="%23FDE047" font-size="20" font-weight="bold" font-family="sans-serif">₹ ${totalAmt}.00</text><text x="50%" y="75%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="12" font-family="sans-serif">Ref: ${utr} • ${month}</text></svg>`;
 
   showSpinner('Saving Contribution to Database...');
   try {
@@ -828,7 +848,7 @@ async function handleContributionSubmit(event) {
         memberId: member.id,
         monthYear: month,
         amount: totalAmt,
-        paymentMethod: 'UPI',
+        paymentMethod: selectedMethod,
         transactionRef: utr,
         status: 'Pending Approval'
       })
@@ -847,7 +867,7 @@ async function handleContributionSubmit(event) {
     cheetiAmt: cheetiAmt,
     interestAmt: interestAmt,
     totalAmt: totalAmt,
-    method: 'UPI',
+    method: selectedMethod,
     utr: utr,
     receiptImg: receiptImg,
     status: 'Pending Approval',
@@ -1619,18 +1639,19 @@ function renderFinancialReportSheet() {
 // DYNAMIC BORROWED LOAN INTEREST AUTO-CALCULATOR & RECEIPT UPLOAD
 // ============================================================
 
-// When Member is selected in Payment Form, auto-calculate 5% interest based on their borrowed loan
+// When Member is selected in Payment Form, auto-calculate interest based on their borrowed loan and dynamic rate
 function onContribMemberChange(memberId) {
   const m = membersData.find(mem => mem.id == memberId) || membersData[0];
   const loanPrincipal = m.loanPrincipal || 0;
-  const calculatedInterest = Math.round(loanPrincipal * 0.05); // 5% monthly interest
+  const rate = (appConfig && appConfig.defaultInterestRate !== undefined && appConfig.defaultInterestRate !== null) ? appConfig.defaultInterestRate : 5;
+  const calculatedInterest = Math.round(loanPrincipal * (rate / 100));
 
   const principalText = document.getElementById('loanInfoPrincipalText');
   const interestText = document.getElementById('loanInfoInterestText');
   const interestInput = document.getElementById('contribInterestInput');
 
   if (principalText) principalText.textContent = `💳 Borrowed Loan: ₹ ${loanPrincipal.toLocaleString()}`;
-  if (interestText) interestText.textContent = `Monthly Interest (5%): ₹ ${calculatedInterest.toLocaleString()}`;
+  if (interestText) interestText.textContent = `Monthly Interest (${rate}%): ₹ ${calculatedInterest.toLocaleString()}`;
   if (interestInput) interestInput.value = calculatedInterest;
 
   updateTotalPaymentCalc();
@@ -1664,9 +1685,10 @@ function onLoanModalMemberChange(memberId) {
 // Live calculation display in Admin Loan Modal
 function updateLoanModalCalculatedInterest() {
   const principal = parseInt(document.getElementById('loanModalPrincipalInput')?.value || 0, 10);
-  const interest = Math.round(principal * 0.05);
+  const rate = (appConfig && appConfig.defaultInterestRate !== undefined && appConfig.defaultInterestRate !== null) ? appConfig.defaultInterestRate : 5;
+  const interest = Math.round(principal * (rate / 100));
   const display = document.getElementById('loanModalInterestDisplay');
-  if (display) display.textContent = `₹ ${interest.toLocaleString()} per month (5%)`;
+  if (display) display.textContent = `₹ ${interest.toLocaleString()} per month (${rate}%)`;
 }
 
 // Handle Admin Save Borrowed Loan Principal
@@ -1678,7 +1700,8 @@ async function handleSaveMemberLoanSubmit(event) {
   const m = membersData.find(mem => mem.id === memberId);
   if (m) {
     m.loanPrincipal = principal;
-    const interest = Math.round(principal * 0.05);
+    const rate = (appConfig && appConfig.defaultInterestRate !== undefined && appConfig.defaultInterestRate !== null) ? appConfig.defaultInterestRate : 5;
+    const interest = Math.round(principal * (rate / 100));
 
     showSpinner('Updating Database...');
     try {
@@ -2129,22 +2152,32 @@ let appConfig = {
 };
 
 function applyGlobalAppConfig() {
-  document.querySelectorAll('.app-title-en-display').forEach(el => el.textContent = appConfig.appTitleEn);
-  document.querySelectorAll('.app-title-kn-display').forEach(el => el.textContent = appConfig.appTitleKn);
+  const titleEn = appConfig.appTitleEn || 'Ganesha Cheeti';
+  const titleKn = appConfig.appTitleKn || 'ಗಣೇಶ ಚೀಟಿ';
+  const groupEn = appConfig.groupNameEn || 'Sri Ganesh Friends';
+  const groupKn = appConfig.groupNameKn || groupEn;
+  const rate = (appConfig.defaultInterestRate !== undefined && appConfig.defaultInterestRate !== null) ? appConfig.defaultInterestRate : 5;
+
+  document.querySelectorAll('.app-title-en-display').forEach(el => el.textContent = titleEn);
+  document.querySelectorAll('.app-title-kn-display').forEach(el => el.textContent = titleKn);
   document.querySelectorAll('.app-title-brand-display').forEach(el => {
-    el.textContent = `${appConfig.appTitleEn} (${appConfig.appTitleKn})`;
+    el.textContent = `${titleEn} (${titleKn})`;
   });
 
+  document.title = `${titleKn} (${titleEn}) - Village Savings Portal`;
+
   if (i18n.en) {
-    i18n.en.appTitle = appConfig.appTitleEn;
-    i18n.en.groupName = `Group: ${appConfig.groupNameEn}`;
+    i18n.en.appTitle = titleEn;
+    i18n.en.groupName = `Group: ${groupEn}`;
+    i18n.en.approxInterest = `${rate}% (approx) - Varies as per group`;
   }
   if (i18n.kn) {
-    i18n.kn.appTitle = appConfig.appTitleKn;
-    i18n.kn.groupName = `ಗುಂಪು: ${appConfig.groupNameKn}`;
+    i18n.kn.appTitle = titleKn;
+    i18n.kn.groupName = `ಗುಂಪು: ${groupKn}`;
+    i18n.kn.approxInterest = `${rate}% (ಅಂದಾಜು) - ಗುಂಪಿನ ನಿಯಮದಂತೆ`;
   }
 
-  document.querySelectorAll('.group-name-display').forEach(el => el.textContent = appConfig.groupNameEn);
+  document.querySelectorAll('.group-name-display').forEach(el => el.textContent = groupEn);
   document.querySelectorAll('.monthly-amt-display').forEach(el => el.textContent = `₹ ${appConfig.monthlyContribution} per member`);
 
   const drawDayText = `${appConfig.cheetiDrawDay}th Oct 2026`;
@@ -2157,6 +2190,16 @@ function applyGlobalAppConfig() {
   if (contribInput) {
     contribInput.value = appConfig.monthlyContribution;
   }
+
+  const selectedMemberSelect = document.getElementById('contribMemberSelect');
+  if (selectedMemberSelect && typeof onContribMemberChange === 'function') {
+    onContribMemberChange(selectedMemberSelect.value || 1);
+  }
+
+  if (typeof updateLoanModalCalculatedInterest === 'function') {
+    updateLoanModalCalculatedInterest();
+  }
+
   if (typeof updateTotalPaymentCalc === 'function') {
     updateTotalPaymentCalc();
   }

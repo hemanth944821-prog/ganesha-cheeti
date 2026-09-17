@@ -64,9 +64,11 @@ app.get(['/settings', '/api/settings'], async (req, res) => {
       if (result.recordset && result.recordset.length > 0) {
         result.recordset.forEach(row => {
           try {
-            settings[row.SettingKey] = JSON.parse(row.SettingValue);
+            const parsed = JSON.parse(row.SettingValue);
+            settings[row.SettingKey] = typeof parsed === 'number' ? parsed : (isNaN(Number(parsed)) ? parsed : Number(parsed));
           } catch (e) {
-            settings[row.SettingKey] = row.SettingValue;
+            const raw = row.SettingValue;
+            settings[row.SettingKey] = (!isNaN(Number(raw)) && raw.trim() !== '') ? Number(raw) : raw;
           }
         });
       }
