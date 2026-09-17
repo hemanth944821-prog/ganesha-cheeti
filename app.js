@@ -574,34 +574,36 @@ function populateMemberDropdowns() {
 
 // Switch Active Screen
 function navigateTo(screenId) {
-  currentScreen = screenId;
+  let targetId = screenId;
+  if (screenId === 'contributions') targetId = 'contribution';
+  currentScreen = targetId;
+
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
   
-  const target = document.getElementById(`screen-${screenId}`);
+  const target = document.getElementById(`screen-${targetId}`);
   if (target) {
     target.classList.add('active-screen');
   }
 
-  if (screenId === 'reports') {
+  if (targetId === 'reports') {
     selectReportPeriodType('monthly');
-  } else if (screenId === 'contribution' || screenId === 'contributions') {
+  } else if (targetId === 'contribution') {
     const month = document.getElementById('monthTrackerSelect')?.value || 'Oct 2026';
     renderMonthWisePaymentTracker(month);
-  } else if (screenId === 'members') {
+  } else if (targetId === 'members') {
     renderMembersList();
-  } else if (screenId === 'expenses') {
+  } else if (targetId === 'expenses') {
     renderExpensesList('all');
   }
 
-
   const navBar = document.getElementById('appBottomNav');
   if (navBar) {
-    navBar.style.display = (screenId === 'splash' || screenId === 'login') ? 'none' : 'flex';
+    navBar.style.display = (targetId === 'splash' || targetId === 'login') ? 'none' : 'flex';
   }
 
   document.querySelectorAll('.nav-item').forEach(item => {
     const targetNav = item.getAttribute('data-screen');
-    if (targetNav === screenId) {
+    if (targetNav === targetId || targetNav === screenId) {
       item.classList.add('active');
     } else {
       item.classList.remove('active');
@@ -611,6 +613,7 @@ function navigateTo(screenId) {
   const container = document.querySelector('.screen-container');
   if (container) container.scrollTop = 0;
 }
+
 
 // Render Members List
 function renderMembersList() {
