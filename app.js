@@ -584,10 +584,15 @@ function navigateTo(screenId) {
 
   if (screenId === 'reports') {
     selectReportPeriodType('monthly');
-  } else if (screenId === 'contribution') {
+  } else if (screenId === 'contribution' || screenId === 'contributions') {
     const month = document.getElementById('monthTrackerSelect')?.value || 'Oct 2026';
     renderMonthWisePaymentTracker(month);
+  } else if (screenId === 'members') {
+    renderMembersList();
+  } else if (screenId === 'expenses') {
+    renderExpensesList('all');
   }
+
 
   const navBar = document.getElementById('appBottomNav');
   if (navBar) {
