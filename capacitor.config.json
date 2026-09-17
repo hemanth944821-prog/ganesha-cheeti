@@ -1,0 +1,9 @@
+{
+  "appId": "com.basaveshwara.cheeti",
+  "appName": "Basaveshwara Cheeti",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  }
+}
