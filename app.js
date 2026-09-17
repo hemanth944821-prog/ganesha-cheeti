@@ -1642,16 +1642,24 @@ function renderFinancialReportSheet() {
 // When Member is selected in Payment Form, auto-calculate interest based on their borrowed loan and dynamic rate
 function onContribMemberChange(memberId) {
   const m = membersData.find(mem => mem.id == memberId) || membersData[0];
-  const loanPrincipal = m.loanPrincipal || 0;
-  const rate = (appConfig && appConfig.defaultInterestRate !== undefined && appConfig.defaultInterestRate !== null) ? appConfig.defaultInterestRate : 5;
+  const loanPrincipal = m ? (m.loanPrincipal || 0) : 0;
+  const rate = (appConfig && appConfig.defaultInterestRate !== undefined && appConfig.defaultInterestRate !== null) ? Number(appConfig.defaultInterestRate) : 5;
   const calculatedInterest = Math.round(loanPrincipal * (rate / 100));
 
+  const banner = document.getElementById('memberLoanInfoBanner');
   const principalText = document.getElementById('loanInfoPrincipalText');
   const interestText = document.getElementById('loanInfoInterestText');
+  const subtext = document.getElementById('loanInfoSubtext');
   const interestInput = document.getElementById('contribInterestInput');
 
   if (principalText) principalText.textContent = `💳 Borrowed Loan: ₹ ${loanPrincipal.toLocaleString()}`;
   if (interestText) interestText.textContent = `Monthly Interest (${rate}%): ₹ ${calculatedInterest.toLocaleString()}`;
+  if (subtext) subtext.textContent = `💡 ಸಾಲದ ಆಧಾರದ ಮೇಲೆ ಬಡ್ಡಿ ₹${calculatedInterest.toLocaleString()} (${rate}%) ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಲೆಕ್ಕಾಚಾರವಾಗಿದೆ.`;
+
+  if (banner) {
+    banner.style.display = loanPrincipal > 0 ? 'block' : 'none';
+  }
+
   if (interestInput) interestInput.value = calculatedInterest;
 
   updateTotalPaymentCalc();
