@@ -1,0 +1,16 @@
+{
+  "name": "ganesha-cheeti",
+  "version": "1.0.0",
+  "description": "Ganesha Cheeti Village Savings & Expense Management System",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mssql": "^10.0.2"
+  }
+}
