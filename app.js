@@ -487,11 +487,11 @@ async function handleLoginSubmit(event) {
       showToast(currentLang === 'kn' ? `ಸ್ವಾಗತ ${currentUser.Name_KN || currentUser.Name_EN}!` : `Welcome ${currentUser.Name_EN}!`, 'success');
       navigateTo('dashboard');
     } else {
-      showToast(result.message || (currentLang === 'kn' ? 'ಅಮಾನ್ಯ ಫೋನ್ ಸಂಖ್ಯೆ ಅಥವಾ ಪಾಸ್‌ವರ್ಡ್' : 'Invalid Phone Number or Password'), 'error');
+      showToast(result.message || result.error || (currentLang === 'kn' ? 'ಅಮಾನ್ಯ ಫೋನ್ ಸಂಖ್ಯೆ ಅಥವಾ ಪಾಸ್‌ವರ್ಡ್' : 'Invalid Phone Number or Password'), 'error');
     }
   } catch (err) {
     hideSpinner();
-    showToast(currentLang === 'kn' ? 'ಲಾಗಿನ್ ದೋಷ. ದಯವಿಟ್ಟು ನಂತರ ಪ್ರಯತ್ನಿಸಿ.' : 'Login Connection Error. Please try again.', 'error');
+    showToast(currentLang === 'kn' ? 'ಸಂಪರ್ಕ ದೋಷ. ದಯವಿಟ್ಟು ನೆಟ್‌ವರ್ಕ್ ಪರಿಶೀಲಿಸಿ.' : 'Connection error. Please check network.', 'error');
   }
 }
 

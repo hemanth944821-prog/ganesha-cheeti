@@ -7,9 +7,12 @@ const config = {
   server: process.env.DB_SERVER || 'db68614.public.databaseasp.net',
   database: process.env.DB_NAME || 'db68614',
   port: parseInt(process.env.DB_PORT, 10) || 1433,
+  connectionTimeout: 15000,
+  requestTimeout: 15000,
   options: {
     encrypt: true,
     trustServerCertificate: true,
+    enableArithAbort: true,
   },
   pool: {
     max: 10,
@@ -18,24 +21,27 @@ const config = {
   },
 };
 
-let poolPromise = null;
+let pool = null;
 
 async function getPool() {
-  if (!poolPromise) {
-    poolPromise = new sql.ConnectionPool(config)
-      .connect()
-      .then((pool) => {
-        console.log('✅ Connected to MSSQL Database:', config.database);
-        return pool;
-      })
-      .catch((err) => {
-        console.warn('⚠️ MSSQL Connection Warning:', err.message);
-        console.warn('Backend will default to mock data fallback if SQL Server is not reachable.');
-        poolPromise = null;
-        return null;
-      });
+  try {
+    if (pool && pool.connected) {
+      return pool;
+    }
+    if (pool) {
+      try {
+        await pool.close();
+      } catch (e) {}
+      pool = null;
+    }
+    pool = await new sql.ConnectionPool(config).connect();
+    console.log('✅ Connected to MSSQL Database:', config.database);
+    return pool;
+  } catch (err) {
+    console.error('❌ MSSQL Connection Error:', err.message);
+    pool = null;
+    return null;
   }
-  return poolPromise;
 }
 
 module.exports = {
